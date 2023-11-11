@@ -1,7 +1,7 @@
-#include "coloring.h"
+#include "coloring.hpp"
 
 namespace coloring {
-    string removeTags(string str, bool removeColors, bool removeDelay, bool removeInstant) {
+    std::string removeTags(std::string str, bool removeColors, bool removeDelay, bool removeInstant) {
         if (removeColors) {
             str = std::regex_replace(str, std::regex("<c.>"), ""); // no starting <cX>
             str = std::regex_replace(str, std::regex("</c>"), ""); // no ending </c>
@@ -16,16 +16,16 @@ namespace coloring {
         return str;
     }
 
-    void parseTags(string str, CCArray* letters) {
-        str = utils::replaceUnicode(str);
+    void parseTags(std::string str, CCArray* letters) {
+        str = gdlutils::replaceUnicode(str);
 
         // colors
-        string modStr = removeTags(str, false);
+        std::string modStr = removeTags(str, false);
 
         int pos = 0;
         while (true) {
             int beginPos = modStr.find("<c", pos);
-            if (beginPos == string::npos)
+            if (beginPos == std::string::npos)
                 break;
 
             auto tag = modStr.at(beginPos + 2);
@@ -83,13 +83,13 @@ namespace coloring {
         pos = 0;
         while (true) {
             size_t beginPos = modStr.find("<d", pos);
-            if (beginPos == string::npos)
+            if (beginPos == std::string::npos)
                 break;
 
             float delay = (atoi(modStr.substr(beginPos + 2, 5).c_str())) / 100.0f;
 
-            if (beginPos < letters->count())
-                dynamic_cast<CCSprite*>(letters->objectAtIndex(beginPos))->m_fDelay = delay;
+            // if (beginPos < letters->count())
+            //     dynamic_cast<CCSprite*>(letters->objectAtIndex(beginPos))->m_fDelay = delay;
 
             modStr.erase(modStr.begin() + beginPos, modStr.begin() + beginPos + 6);
 
@@ -102,7 +102,7 @@ namespace coloring {
         pos = 0;
         while (true) {
             size_t beginPos = modStr.find("<i>", pos);
-            if (beginPos == string::npos)
+            if (beginPos == std::string::npos)
                 break;
 
             size_t endPos = modStr.find("</i>", pos);
