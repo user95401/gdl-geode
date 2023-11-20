@@ -49,6 +49,7 @@ class $modify(MenuLayer){
         CCLabelBMFont* text = CCLabelBMFont::create("GDL v1.1.2", "goldFont.fnt");
         this->addChild(text);
         text->setScale(0.75f);
+        text->setID("gdl-version");
         text->setPosition({winSize.width / 2.f, winSize.height - 14.f});
 
         return true;
@@ -93,7 +94,7 @@ class $modify(TextArea){
         CCArray* letterArray = CCArray::create();
         CCARRAY_FOREACH_B_TYPE(this->m_label->getChildren(), lbl, CCLabelBMFont) {
             lbl->setString(lines[ix].c_str());
-            lbl->setAnchorPoint({this->getAnchorPoint().x, lbl->getAnchorPoint().y});
+            lbl->setAnchorPoint({this->m_anchorPoint.x, lbl->getAnchorPoint().y});
             letterArray->addObjectsFromArray(lbl->getChildren());
         }
 
@@ -231,7 +232,7 @@ class $modify(OptionsLayer){
     void customSetup(){
         OptionsLayer::customSetup();
 
-        auto spr = CCSprite::createWithSpriteFrameName("gdlIcon.png"_spr);
+        auto spr = CCSprite::createWithSpriteFrameName("gdlIcon.png");
         spr->setScale(1.25f);
 
         auto btn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(GDLMenu::openLayer));

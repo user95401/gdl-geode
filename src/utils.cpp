@@ -180,10 +180,6 @@ void gdlutils::reloadAll(){
 }
 
 void gdlutils::achievementsTranslation(bool enable){
-    const char* plist = (enable) ? (Mod::get()->getResourcesDir() / "AchievementsDesc.plist").string().c_str() : "AchievementsDesc.plist";
-    log::info("ACH {}", plist);
-
+    const char* plist = (enable) ? "AchievementsDesc.plist"_spr : "AchievementsDesc.plist";
     Mod::get()->patch((void*)(base::get() + 0x7BD9), ByteVector((uint8_t*)&plist, (uint8_t*)&plist + 4));
-
-    AchievementManager::sharedState()->init();
 }
