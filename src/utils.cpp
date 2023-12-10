@@ -111,14 +111,13 @@ nlohmann::json gdlutils::loadJson(const std::string& name) {
 
             return translationObj;
         } catch (...) {
-            MessageBoxA(0, fmt::format("Failed to parse json \"{}\". Please check the file for mistakes.", name).c_str(), "GDL Error",
-                        0);
-            exit(1);
+            log::error("Failed to parse json \"{}\". Please check the file for mistakes.", name);
+
             return nullptr;
         }
     } else {
-        MessageBoxA(0, fmt::format("Failed to open json \"{}\".", name).c_str(), "GDL Error", 0);
-        exit(1);
+        log::error("Failed to open json \"{}\".", name);
+
         return nullptr;
     }
 }
@@ -181,5 +180,7 @@ void gdlutils::reloadAll(){
 
 void gdlutils::achievementsTranslation(bool enable){
     const char* plist = (enable) ? "AchievementsDesc.plist"_spr : "AchievementsDesc.plist";
+#ifdef GEODE_IS_WINDOWS
     Mod::get()->patch((void*)(base::get() + 0x7BD9), ByteVector((uint8_t*)&plist, (uint8_t*)&plist + 4));
+#endif
 }

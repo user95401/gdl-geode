@@ -1,4 +1,25 @@
 #include "hooks.hpp"
+#include "coloring.hpp"
+#include "menu.hpp"
+#include <utf8.h>
+
+#include <Geode/Geode.hpp>
+#include <Geode/modify/CCKeyboardDispatcher.hpp>
+#include <Geode/modify/MenuLayer.hpp>
+#include <Geode/modify/GDString.hpp>
+#include <Geode/modify/TextArea.hpp>
+#include <Geode/modify/CCApplication.hpp>
+#include <Geode/modify/AchievementBar.hpp>
+#include <Geode/modify/GauntletNode.hpp>
+#include <Geode/modify/CCNode.hpp>
+#include <Geode/modify/CCLabelBMFont.hpp>
+#include <Geode/modify/GauntletSelectLayer.hpp>
+#include <Geode/modify/LevelLeaderboard.hpp>
+#include <Geode/modify/LoadingLayer.hpp>
+#include <Geode/modify/OptionsLayer.hpp>
+#include <Geode/modify/CCTextureCache.hpp>
+#include <Geode/modify/CCSpriteFrameCache.hpp>
+#include <Geode/modify/MultilineBitmapFont.hpp>
 
 using namespace geode::prelude;
 
@@ -6,11 +27,14 @@ void hooks::initPatches() {
     static std::vector<std::string> strings;
     
     auto langFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_ru.json").string());
-    auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "gdl_patches.json").string());
 
     strings.clear();
     strings.reserve(langFile.size());
-    
+
+
+#ifdef GEODE_IS_WINDOWS
+    auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "gdl_patches-windows.json").string());
+
     for (const auto& pair : langFile.items()) {
         if (!patchFile.contains(pair.key()))
             continue;
@@ -22,9 +46,30 @@ void hooks::initPatches() {
             Mod::get()->patch((void*)(base::get() + addr), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4));
         }
     }
+#elif defined(GEODE_IS_ANDROID)
+    auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "gdl_patches-android.json").string());
+    
+    for (const auto& pair : langFile.items()) {
+        if (!patchFile.contains(pair.key()))
+            continue;
+    
+        strings.push_back(pair.value());
+
+        const char* str = strings[strings.size() - 1].c_str();
+        auto array = patchFile[pair.key()].get<nlohmann::json::array_t>();
+ 
+        for(const auto& addr : array[0].get<nlohmann::json::array_t>()) {
+            Mod::get()->patch((void*)(base::get() + addr.get<uintptr_t>()), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4));
+        }
+
+        for(const auto& addr : array[1].get<nlohmann::json::array_t>()) {
+            Mod::get()->patch((void*)(base::get() + addr.get<uintptr_t>()), ByteVector({0x00, 0xBF}));
+        }
+    }
+#endif
 }
 
-#ifdef GDL_INDEV
+#if defined(GDL_INDEV) && defined(GEODE_IS_WINDOWS)
 class $modify(CCKeyboardDispatcher){
     bool dispatchKeyboardMSG(enumKeyCodes key, bool down){
         if (key == KEY_P && down) {
@@ -56,6 +101,7 @@ class $modify(MenuLayer){
     }
 };
 
+#ifdef GEODE_IS_WINDOWS
 class $modify(GDString){
 /*     
         Зачем нужны эти хуки:
@@ -127,6 +173,7 @@ class $modify(AchievementBar){
         return true;
     }
 };
+#endif
 
 class $modify(GauntletNode){
     bool init(GJMapPack* mapPack){
@@ -203,7 +250,7 @@ class $modify(LevelLeaderboard){
             }
         }
 
-        lbl->setString(fmt::format("Таблица Лидеров для {}", lvl->m_levelName).c_str());
+        lbl->setString(fmt::format("Таблица Лидеров для {}", lvl->m_levelName.c_str()).c_str());
 
         return true;
     }
@@ -218,7 +265,7 @@ class $modify(LoadingLayer){
             CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile(plist.c_str());
 
             // Я не понимаю почему функция не может загрузить .png автоматически, ведь в описании указано, что может
-            // I don't understand why the function can't load .png automatically, the description states that it can
+            // I can't understand why function can't load .png automatically, the description states that it can
             CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile(plist.c_str(),
                 CCTextureCache::sharedTextureCache()->addImage(png.c_str(), false)
             );
@@ -245,6 +292,76 @@ class $modify(OptionsLayer){
     }
 };
 
+#ifdef GEODE_IS_ANDROID
+std::string g_currentFont;
+
+class $modify(MultilineBitmapFont) {
+    bool initWithFont(const char* fontName, gd::string str, float scale, float width, CCPoint anchorPoint, int unk, bool bColourDisabled) {
+        g_currentFont = fontName;
+        if (!MultilineBitmapFont::initWithFont(fontName, str, scale, width, anchorPoint, unk, bColourDisabled))
+            return false;
+
+        if (!bColourDisabled) {
+            auto letters = cocos2d::CCArray::create();
+            for (int i = 0; i < this->getChildrenCount(); i++) {
+                auto lbl = (CCNode*)(this->getChildren()->objectAtIndex(i));
+                letters->addObjectsFromArray(lbl->getChildren());
+            }
+
+            coloring::parseTags(str, letters);
+        }
+
+        return true;
+    }
+
+    gd::string readColorInfo(gd::string str) {
+        return coloring::removeTags(str);
+    }
+
+    gd::string stringWithMaxWidth(gd::string str, float scaledWidth, float scale) {
+        auto lbl = CCLabelBMFont::create("", g_currentFont.c_str());
+        lbl->setScale(scale);
+
+        std::string strr = str.c_str();
+
+        auto hasNL = strr.find("\n") != std::string::npos;
+        auto line = hasNL ? gdlutils::splitString(str, '\n')[0] : strr;
+
+        float width = scaledWidth / CCDirector::sharedDirector()->getContentScaleFactor();
+
+        bool overflown = false;
+        std::string current;
+
+        auto b = line.begin();
+        auto e = line.end();
+        while (b != e) {
+            auto cp = utf8::next(b, e);
+            utf8::append((char32_t)cp, current);
+
+            lbl->setString(current.c_str());
+
+            if (lbl->getScaledContentSize().width > width) {
+                overflown = true;
+                break;
+            }
+        }
+
+        if (overflown) {
+            if (current.find(' ') != std::string::npos) {
+                auto words = gdlutils::splitString(current, ' ');
+                words.pop_back();
+                current = gdlutils::joinStrings(words, " ");
+                current = gdlutils::joinStrings(words, " ") + " ";
+            }
+        } else if (hasNL) {
+            current += " ";
+        }
+
+        return gd::string(current);
+    }
+};
+#endif
+
 // cocos hooks
 class $modify(CCApplication){
     void openURL(char const* url){
@@ -266,9 +383,9 @@ class $modify(CCNode){
         if (hooks::locationsFile.contains(lbl->getString())) {
             auto entry = hooks::locationsFile[lbl->getString()];
             if (entry.contains("x"))
-                p.x += entry["x"];
+                p.x += entry["x"].get<float>();
             if (entry.contains("y"))
-                p.y += entry["y"];
+                p.y += entry["y"].get<float>();
         }
 
         CCNode::setPosition(p);

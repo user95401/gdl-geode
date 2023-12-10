@@ -88,9 +88,6 @@ namespace coloring {
 
             float delay = (atoi(modStr.substr(beginPos + 2, 5).c_str())) / 100.0f;
 
-            // if (beginPos < letters->count())
-            //     dynamic_cast<CCSprite*>(letters->objectAtIndex(beginPos))->m_fDelay = delay;
-
             modStr.erase(modStr.begin() + beginPos, modStr.begin() + beginPos + 6);
 
             pos = beginPos + 1;

@@ -1,28 +1,10 @@
 #pragma once
 
-#include <Geode/Geode.hpp>
-#include <Geode/modify/CCKeyboardDispatcher.hpp>
-#include <Geode/modify/MenuLayer.hpp>
-#include <Geode/modify/GDString.hpp>
-#include <Geode/modify/TextArea.hpp>
-#include <Geode/modify/CCApplication.hpp>
-#include <Geode/modify/AchievementBar.hpp>
-#include <Geode/modify/GauntletNode.hpp>
-#include <Geode/modify/CCNode.hpp>
-#include <Geode/modify/CCLabelBMFont.hpp>
-#include <Geode/modify/GauntletSelectLayer.hpp>
-#include <Geode/modify/LevelLeaderboard.hpp>
-#include <Geode/modify/LoadingLayer.hpp>
-#include <Geode/modify/OptionsLayer.hpp>
-#include <Geode/modify/CCTextureCache.hpp>
-#include <Geode/modify/CCSpriteFrameCache.hpp>
-
 #include <map>
+#include <vector>
 #include <algorithm>
 #include "json.hpp"
 #include "utils.hpp"
-#include "coloring.hpp"
-#include "menu.hpp"
 
 namespace hooks {
     inline nlohmann::json locationsFile;

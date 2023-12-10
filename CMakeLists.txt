@@ -20,6 +20,9 @@ endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE libs/)
 
+add_subdirectory(libs/utf8)
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
+
+target_link_libraries(${PROJECT_NAME} utf8cpp)
 
 setup_geode_mod(${PROJECT_NAME})
