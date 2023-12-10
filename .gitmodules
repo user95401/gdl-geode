@@ -1,0 +1,3 @@
+[submodule "libs/utf8"]
+	path = libs/utf8
+	url = https://github.com/nemtrif/utfcpp.git
