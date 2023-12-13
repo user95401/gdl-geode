@@ -53,4 +53,5 @@
 # clangd
 .cache/
 
-build.bat
+CMakePresets.json
+mergemods.py

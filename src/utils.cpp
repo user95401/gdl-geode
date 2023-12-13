@@ -179,8 +179,20 @@ void gdlutils::reloadAll(){
 }
 
 void gdlutils::achievementsTranslation(bool enable){
-    const char* plist = (enable) ? "AchievementsDesc.plist"_spr : "AchievementsDesc.plist";
 #ifdef GEODE_IS_WINDOWS
-    Mod::get()->patch((void*)(base::get() + 0x7BD9), ByteVector((uint8_t*)&plist, (uint8_t*)&plist + 4));
+    const char* plist = (enable) ? "AchievementsDesc.plist"_spr : "AchievementsDesc.plist";
+    gdlutils::patchString(base::get() + 0x7BD9, plist);
 #endif
 }
+
+
+#ifdef GEODE_IS_WINDOWS
+void gdlutils::patchString(uintptr_t absAddress, char const* str) {
+    Mod::get()->patch((void*)absAddress, ByteVector {(uint8_t*)&str, (uint8_t*)&str + 4});
+}
+#elif defined(GEODE_IS_ANDROID)
+void gdlutils::patchString(uintptr_t dcd, uintptr_t add, char const* str) {
+    Mod::get()->patch((void*)(base::get() + dcd), ByteVector {(uint8_t*)&str, (uint8_t*)&str + 4});
+    Mod::get()->patch((void*)(base::get() + add), ByteVector {0x00, 0xBF});
+}
+#endif

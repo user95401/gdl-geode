@@ -37,4 +37,10 @@ namespace gdlutils {
     void reloadAll();
 
     void achievementsTranslation(bool enable);
+
+#ifdef GEODE_IS_WINDOWS
+    void patchString(uintptr_t absAddress, char const* str);
+#elif defined(GEODE_IS_ANDROID)
+    void patchString(uintptr_t dcd, uintptr_t add, char const* str);
+#endif
 } // namespace utils
