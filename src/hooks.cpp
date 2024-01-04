@@ -1,54 +1,77 @@
 #include <utf8.h>
-
+#include "utils.hpp"
 #include <Geode/Geode.hpp>
+#include <Geode/modify/CCLabelBMFont.hpp>
+#include <Geode/modify/CCTextureCache.hpp>
 
 using namespace geode::prelude;
+    // inline nlohmann::json locationsFile;
+    // inline std::map<char const*, char const*> const urls = {
+    //     {"http://robtopgames.com/blog/2017/02/01/geometry-dash-newgrounds", "https://www.gdlocalisation.uk/gd/blog/ru/#newgrounds_start"},
+    //     {"http://www.boomlings.com/files/GJGuide.pdf", "https://www.gdlocalisation.uk/gd/gjguide/ru/gjguide_ru.pdf"},
+    //     {"http://www.robtopgames.com/gd/faq", "https://www.gdlocalisation.uk/gd/blog/ru"}
+    // };
+    // inline std::vector<std::string> fonts = {
+    //     "bigFont.png",  "bigFont-hd.png",  "bigFont-uhd.png", 
+    //     "chatFont.png", "chatFont-hd.png", "chatFont-uhd.png", 
+    //     "goldFont.png", "goldFont-hd.png", "goldFont-uhd.png", 
+    //     "gjFont01.png", "gjFont01-hd.png", "gjFont01-uhd.png", 
+    //     "gjFont02.png", "gjFont02-hd.png", "gjFont02-uhd.png", 
+    //     "gjFont03.png", "gjFont03-hd.png", "gjFont03-uhd.png", 
+    //     "gjFont04.png", "gjFont04-hd.png", "gjFont04-uhd.png", 
+    //     "gjFont05.png", "gjFont05-hd.png", "gjFont05-uhd.png", 
+    //     "gjFont06.png", "gjFont06-hd.png", "gjFont06-uhd.png", 
+    //     "gjFont07.png", "gjFont07-hd.png", "gjFont07-uhd.png", 
+    //     "gjFont08.png", "gjFont08-hd.png", "gjFont08-uhd.png", 
+    //     "gjFont09.png", "gjFont09-hd.png", "gjFont09-uhd.png", 
+    //     "gjFont10.png", "gjFont10-hd.png", "gjFont10-uhd.png", 
+    //     "gjFont11.png", "gjFont11-hd.png", "gjFont11-uhd.png", 
+    // };
 
-// void hooks::initPatches() {
-//     static std::vector<std::string> strings;
+void initPatches() {
+    static std::vector<std::string> strings;
     
-//     auto langFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_ru.json").string());
+    auto langFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_ru.json").string());
 
-//     strings.clear();
-//     strings.reserve(langFile.size());
+    strings.clear();
+    strings.reserve(langFile.size());
 
+#ifdef GEODE_IS_WINDOWS
+    auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "gdl_patches-windows.json").string());
 
-// #ifdef GEODE_IS_WINDOWS
-//     auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "gdl_patches-windows.json").string());
-
-//     for (const auto& pair : langFile.items()) {
-//         if (!patchFile.contains(pair.key()))
-//             continue;
+    for (const auto& pair : langFile.items()) {
+        if (!patchFile.contains(pair.key()))
+            continue;
     
-//         strings.push_back(pair.value());
+        strings.push_back(pair.value());
     
-//         for (const auto addr : patchFile[pair.key()]) {
-//             const char* str = strings[strings.size() - 1].c_str();
-//             Mod::get()->patch((void*)(base::get() + addr), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4));
-//         }
-//     }
-// #elif defined(GEODE_IS_ANDROID)
-//     auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "gdl_patches-android.json").string());
+        for (const auto addr : patchFile[pair.key()]) {
+            const char* str = strings[strings.size() - 1].c_str();
+            Mod::get()->patch((void*)(base::get() + addr), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4));
+        }
+    }
+#elif defined(GEODE_IS_ANDROID)
+    auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "gdl_patches-android.json").string());
     
-//     for (const auto& pair : langFile.items()) {
-//         if (!patchFile.contains(pair.key()))
-//             continue;
+    for (const auto& pair : langFile.items()) {
+        if (!patchFile.contains(pair.key()))
+            continue;
     
-//         strings.push_back(pair.value());
+        strings.push_back(pair.value());
 
-//         const char* str = strings[strings.size() - 1].c_str();
-//         auto array = patchFile[pair.key()].get<nlohmann::json::array_t>();
+        const char* str = strings[strings.size() - 1].c_str();
+        auto array = patchFile[pair.key()].get<nlohmann::json::array_t>();
  
-//         for(const auto& addr : array[0].get<nlohmann::json::array_t>()) {
-//             Mod::get()->patch((void*)(base::get() + addr.get<uintptr_t>()), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4));
-//         }
+        for(const auto& addr : array[0].get<nlohmann::json::array_t>()) {
+            Mod::get()->patch((void*)(base::get() + addr.get<uintptr_t>()), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4));
+        }
 
-//         for(const auto& addr : array[1].get<nlohmann::json::array_t>()) {
-//             Mod::get()->patch((void*)(base::get() + addr.get<uintptr_t>()), ByteVector({0x00, 0xBF}));
-//         }
-//     }
-// #endif
-// }
+        for(const auto& addr : array[1].get<nlohmann::json::array_t>()) {
+            Mod::get()->patch((void*)(base::get() + addr.get<uintptr_t>()), ByteVector({0x00, 0xBF}));
+        }
+    }
+#endif
+}
 
 // #if defined(GDL_INDEV) && defined(GEODE_IS_WINDOWS)
 // class $modify(CCKeyboardDispatcher){
@@ -373,43 +396,53 @@ using namespace geode::prelude;
 //     }
 // };
 
-// class $modify(CCLabelBMFont){
-//     void setScale(float scale){
-//         if (hooks::locationsFile.contains(this->getString())) {
-//             auto entry = hooks::locationsFile[this->getString()];
-//             if (entry.contains("scale"))
-//                 scale = entry["scale"];
-//         }
+class $modify(CCLabelBMFont){
+    // void setScale(float scale){
+    //     if (hooks::locationsFile.contains(this->getString())) {
+    //         auto entry = hooks::locationsFile[this->getString()];
+    //         if (entry.contains("scale"))
+    //             scale = entry["scale"];
+    //     }
 
-//         CCLabelBMFont::setScale(scale);
-//     }
+    //     CCLabelBMFont::setScale(scale);
+    // }
 
-//     CCLabelBMFont* create(char const* str, char const* fnt){
-//         if(ghc::filesystem::exists(Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt))) {
-//             return CCLabelBMFont::create(str, (Mod::get()->getResourcesDir() / fnt).string().c_str());
-//         }
+    // static CCLabelBMFont* create(char const* str, char const* fnt){
+    //     log::debug("{}", fnt);
+    //     if(ghc::filesystem::exists(Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt))) {
+    //         log::debug("new font {}", (Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt)).string().c_str());
+    //         return CCLabelBMFont::create(str, (Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt)).string().c_str());
+    //     }
 
-//         return CCLabelBMFont::create(str, fnt);
-//     }
+    //     return CCLabelBMFont::create(str, fnt);
+    // }
 
-//     bool initWithString(const char* str, const char* fnt, float width, cocos2d::CCTextAlignment align, cocos2d::CCPoint offset){
-//         if(ghc::filesystem::exists(Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt))) {
-//             return CCLabelBMFont::initWithString(str, (Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt)).string().c_str(), width, align, offset);
-//         }
+    bool initWithString(const char* str, const char* fnt, float width, cocos2d::CCTextAlignment align, cocos2d::CCPoint offset){
+        log::info("initwithstring {}", fnt);
+        auto newFont = Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt);
+        if(ghc::filesystem::exists(newFont)) {
+            log::info("new font {}", newFont.string());
+            return CCLabelBMFont::initWithString(str, newFont.string().c_str(), width, align, offset);
+        }
 
-//         return CCLabelBMFont::initWithString(str, fnt, width, align, offset);
-//     }
-// };
+        return CCLabelBMFont::initWithString(str, fnt, width, align, offset);
+    }
+};
 
-// class $modify(CCTextureCache){
-//     CCTexture2D* addImage(char const* filename, bool idk){
-//         if(std::find(hooks::fonts.begin(), hooks::fonts.end(), filename) != hooks::fonts.end() && ghc::filesystem::exists(Mod::get()->getResourcesDir() / filename)) {
-//             return CCTextureCache::addImage((Mod::get()->getResourcesDir() / filename).string().c_str(), idk);
-//         }
+class $modify(CCTextureCache){
+    CCTexture2D* addImage(char const* filename, bool idk){
+        // if(std::find(hooks::fonts.begin(), hooks::fonts.end(), filename) != hooks::fonts.end() && ghc::filesystem::exists(Mod::get()->getResourcesDir() / filename)) {
+        //     return CCTextureCache::addImage((Mod::get()->getResourcesDir() / filename).string().c_str(), idk);
+        // }
 
-//         return CCTextureCache::addImage(filename, idk);
-//     }
-// };
+        auto newPath = Mod::get()->getResourcesDir() / gdlutils::getQualityString(filename);
+        if (ghc::filesystem::exists(newPath)) {
+            return CCTextureCache::addImage(newPath.string().c_str(), idk);
+        }
+
+        return CCTextureCache::addImage(filename, idk);
+    }
+};
 
 void (__thiscall* std_string_assign_o)(void* self, char* src, size_t len);
 void std_string_assign_hk(void* self, char* src, size_t len) {
@@ -420,8 +453,9 @@ void std_string_assign_hk(void* self, char* src, size_t len) {
 }
 
 $execute {
-	static const char* test = "Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL!\nThis is longer than the original string!";
-	Mod::get()->patch((void*)(base::get() + 0x277DBB), ByteVector((uint8_t*)&test, (uint8_t*)&test + 4));
+	// static const char* test = "Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL!\nThis is longer than the original string!";
+	// Mod::get()->patch((void*)(base::get() + 0x277DBB), ByteVector((uint8_t*)&test, (uint8_t*)&test + 4));
+    initPatches();
 
 	std_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + 0x1BB10);
 	

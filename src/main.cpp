@@ -5,7 +5,7 @@
 
 using namespace geode::prelude;
 
-$execute {
+// $execute {
 // 	hooks::locationsFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_ru_locations.json").string());
 
 // #ifdef GEODE_IS_WINDOWS
@@ -65,4 +65,4 @@ $execute {
 //         auto notification = Notification::create("Restart gd for apply changes", CCSprite::create("GJ_infoIcon_001.png"), 1.0f);
 //         notification->show();
 //     });
-}
+// }
