@@ -8,6 +8,7 @@
 #include <Geode/modify/CCNode.hpp>
 #include <Geode/modify/CCApplication.hpp>
 #include <Geode/modify/OptionsLayer.hpp>
+#include <Geode/modify/LoadingLayer.hpp>
 
 using namespace geode::prelude;
 nlohmann::json locationsFile;
