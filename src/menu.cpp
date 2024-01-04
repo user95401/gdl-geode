@@ -44,7 +44,7 @@ void GDLMenu::setup() {
 
     auto dispatcher = CCDirector::sharedDirector()->getTouchDispatcher();
     dispatcher->setForcePrio(true);
-    dispatcher->incrementForcePrio(200);
+    // dispatcher->incrementForcePrio(200);
     dispatcher->addTargetedDelegate(this, 200, true);
 
     // title
@@ -164,7 +164,7 @@ void GDLMenu::keyBackClicked() {
 
     auto dispatcher = CCDirector::sharedDirector()->getTouchDispatcher();
     dispatcher->removeDelegate(this);
-    dispatcher->decrementForcePrio(200);
+    // dispatcher->decrementForcePrio(200);
     dispatcher->setForcePrio(false);
 }
 

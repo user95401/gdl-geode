@@ -3,11 +3,11 @@
 #include <map>
 #include <vector>
 #include <algorithm>
-#include "json.hpp"
+// #include "json.hpp"
 #include "utils.hpp"
 
 namespace hooks {
-    inline nlohmann::json locationsFile;
+    // inline nlohmann::json locationsFile;
     inline std::map<char const*, char const*> const urls = {
         {"http://robtopgames.com/blog/2017/02/01/geometry-dash-newgrounds", "https://www.gdlocalisation.uk/gd/blog/ru/#newgrounds_start"},
         {"http://www.boomlings.com/files/GJGuide.pdf", "https://www.gdlocalisation.uk/gd/gjguide/ru/gjguide_ru.pdf"},
