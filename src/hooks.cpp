@@ -1,36 +1,26 @@
 #include <utf8.h>
 #include "utils.hpp"
+#include "menu.hpp"
+
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CCLabelBMFont.hpp>
 #include <Geode/modify/CCTextureCache.hpp>
+#include <Geode/modify/CCNode.hpp>
+#include <Geode/modify/CCApplication.hpp>
+#include <Geode/modify/OptionsLayer.hpp>
 
 using namespace geode::prelude;
-    // inline nlohmann::json locationsFile;
-    // inline std::map<char const*, char const*> const urls = {
-    //     {"http://robtopgames.com/blog/2017/02/01/geometry-dash-newgrounds", "https://www.gdlocalisation.uk/gd/blog/ru/#newgrounds_start"},
-    //     {"http://www.boomlings.com/files/GJGuide.pdf", "https://www.gdlocalisation.uk/gd/gjguide/ru/gjguide_ru.pdf"},
-    //     {"http://www.robtopgames.com/gd/faq", "https://www.gdlocalisation.uk/gd/blog/ru"}
-    // };
-    // inline std::vector<std::string> fonts = {
-    //     "bigFont.png",  "bigFont-hd.png",  "bigFont-uhd.png", 
-    //     "chatFont.png", "chatFont-hd.png", "chatFont-uhd.png", 
-    //     "goldFont.png", "goldFont-hd.png", "goldFont-uhd.png", 
-    //     "gjFont01.png", "gjFont01-hd.png", "gjFont01-uhd.png", 
-    //     "gjFont02.png", "gjFont02-hd.png", "gjFont02-uhd.png", 
-    //     "gjFont03.png", "gjFont03-hd.png", "gjFont03-uhd.png", 
-    //     "gjFont04.png", "gjFont04-hd.png", "gjFont04-uhd.png", 
-    //     "gjFont05.png", "gjFont05-hd.png", "gjFont05-uhd.png", 
-    //     "gjFont06.png", "gjFont06-hd.png", "gjFont06-uhd.png", 
-    //     "gjFont07.png", "gjFont07-hd.png", "gjFont07-uhd.png", 
-    //     "gjFont08.png", "gjFont08-hd.png", "gjFont08-uhd.png", 
-    //     "gjFont09.png", "gjFont09-hd.png", "gjFont09-uhd.png", 
-    //     "gjFont10.png", "gjFont10-hd.png", "gjFont10-uhd.png", 
-    //     "gjFont11.png", "gjFont11-hd.png", "gjFont11-uhd.png", 
-    // };
+nlohmann::json locationsFile;
+std::map<char const*, char const*> const urls = {
+    {"http://robtopgames.com/blog/2017/02/01/geometry-dash-newgrounds", "https://www.gdlocalisation.uk/gd/blog/ru/#newgrounds_start"},
+    {"http://www.boomlings.com/files/GJGuide.pdf", "https://www.gdlocalisation.uk/gd/gjguide/ru/gjguide_ru.pdf"},
+    {"http://www.robtopgames.com/gd/faq", "https://www.gdlocalisation.uk/gd/blog/ru"}
+};
 
 void initPatches() {
     static std::vector<std::string> strings;
     
+	locationsFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_ru_locations.json").string());
     auto langFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_ru.json").string());
 
     strings.clear();
@@ -106,29 +96,6 @@ void initPatches() {
 // };
 
 // #ifdef GEODE_IS_WINDOWS
-// class $modify(GDString){
-// /*     
-//         Зачем нужны эти хуки:
-//         В некоторых случаях в гд, функция GDString::assign вызывается в заданной длинной,
-//         которая ограничивает длинну строки, но переведенная строка может быть длиннее чем оригинальная.
-//         Было бы намного сложнее пропатчить все длины строк, учитывая то, что не везде указывается длина строки.
-//         В общем намного легче хукнуть эту функция и установить новую длину строки.
-
-//         Why this is required:
-//         In some places of gd you can see GDString::assign called with fixed length
-//         which limits strings to the length it was in the game but the translated strings may be longer than the original ones.
-//         It is also pretty difficult to patch the length as it is not used in all calls and i would somehow need to find places to patch
-//         So it is easier to hook it and just set it to the string length instead of the fixed length
-// */
-//     GDString& winAssign(char const* ptr, size_t size){
-//         return GDString::winAssign(ptr, strlen(ptr));
-//     }
-
-//     GDString& operatorPlus(char const* ptr, size_t size){
-//         return GDString::operatorPlus(ptr, strlen(ptr));
-//     }
-// };
-
 // class $modify(TextArea){
 //     void setString(gd::string str){
 //         auto noTagsStr = coloring::removeTags(str);
@@ -260,41 +227,41 @@ void initPatches() {
 //     }
 // };
 
-// class $modify(LoadingLayer){
-//     void loadAssets(){   
-//         if(this->m_loadStep == 10 && Mod::get()->getSettingValue<bool>("framesTranslation")){
-//             auto plist = (Mod::get()->getResourcesDir() / gdlutils::getQualityString("GDL_TranslatedFrames.plist")).string();
-//             auto png = (Mod::get()->getResourcesDir() / gdlutils::getQualityString("GDL_TranslatedFrames.png")).string();
+class $modify(LoadingLayer){
+    void loadAssets(){
+        if(this->m_loadStep == 10 && Mod::get()->getSettingValue<bool>("framesTranslation")){
+            auto plist = (Mod::get()->getResourcesDir() / gdlutils::getQualityString("GDL_TranslatedFrames.plist")).string();
+            auto png = (Mod::get()->getResourcesDir() / gdlutils::getQualityString("GDL_TranslatedFrames.png")).string();
 
-//             CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile(plist.c_str());
+            CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile(plist.c_str());
 
-//             // Я не понимаю почему функция не может загрузить .png автоматически, ведь в описании указано, что может
-//             // I can't understand why function can't load .png automatically, the description states that it can
-//             CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile(plist.c_str(),
-//                 CCTextureCache::sharedTextureCache()->addImage(png.c_str(), false)
-//             );
-//         }
+            // Я не понимаю почему функция не может загрузить .png автоматически, ведь в описании указано, что может
+            // I can't understand why function can't load .png automatically, the description states that it can
+            CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile(plist.c_str(),
+                CCTextureCache::sharedTextureCache()->addImage(png.c_str(), false)
+            );
+        }
 
-//         LoadingLayer::loadAssets();
-//     }
-// };
+        LoadingLayer::loadAssets();
+    }
+};
 
-// class $modify(OptionsLayer){
-//     void customSetup(){
-//         OptionsLayer::customSetup();
+class $modify(OptionsLayer){
+    void customSetup(){
+        OptionsLayer::customSetup();
 
-//         auto spr = CCSprite::createWithSpriteFrameName("gdlIcon.png");
-//         spr->setScale(1.25f);
+        auto spr = CCSprite::createWithSpriteFrameName("gdlIcon.png"_spr);
+        spr->setScale(1.25f);
 
-//         auto btn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(GDLMenu::openLayer));
-//         btn->setPosition({0, 0});
+        auto btn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(GDLMenu::openLayer));
+        btn->setPosition({0, 0});
 
-//         auto menu = CCMenu::create();
-//         menu->addChild(btn);
-//         menu->setPosition({30, 30});
-//         this->m_mainLayer->addChild(menu, 200);
-//     }
-// };
+        auto menu = CCMenu::create();
+        menu->addChild(btn);
+        menu->setPosition({30, 30});
+        this->m_mainLayer->addChild(menu, 200);
+    }
+};
 
 // #ifdef GEODE_IS_ANDROID
 // std::string g_currentFont;
@@ -366,56 +333,55 @@ void initPatches() {
 // };
 // #endif
 
-// // cocos hooks
-// class $modify(CCApplication){
-//     void openURL(char const* url){
-//         if(hooks::urls.contains(url)){
-//             return CCApplication::openURL(hooks::urls.at(url));
-//         }
+// cocos hooks
+class $modify(CCApplication){
+    void openURL(char const* url){
+        if(urls.contains(url)){
+            return CCApplication::openURL(urls.at(url));
+        }
 
-//         CCApplication::openURL(url);
-//     }
-// };
+        CCApplication::openURL(url);
+    }
+};
 
-// class $modify(CCNode){
-//     void setPosition(CCPoint p){
-//         auto lbl = dynamic_cast<CCLabelBMFont*>(this);
+class $modify(CCNode){
+    void setPosition(CCPoint p){
+        auto lbl = dynamic_cast<CCLabelBMFont*>(this);
 
-//         if (!lbl)
-//             return CCNode::setPosition(p);
+        if (!lbl)
+            return CCNode::setPosition(p);
 
-//         if (hooks::locationsFile.contains(lbl->getString())) {
-//             auto entry = hooks::locationsFile[lbl->getString()];
-//             if (entry.contains("x"))
-//                 p.x += entry["x"].get<float>();
-//             if (entry.contains("y"))
-//                 p.y += entry["y"].get<float>();
-//         }
+        if (locationsFile.contains(lbl->getString())) {
+            auto entry = locationsFile[lbl->getString()];
+            if (entry.contains("x"))
+                p.x += entry["x"].get<float>();
+            if (entry.contains("y"))
+                p.y += entry["y"].get<float>();
+        }
 
-//         CCNode::setPosition(p);
-//     }
-// };
+        CCNode::setPosition(p);
+    }
+};
 
 class $modify(CCLabelBMFont){
-    // void setScale(float scale){
-    //     if (hooks::locationsFile.contains(this->getString())) {
-    //         auto entry = hooks::locationsFile[this->getString()];
-    //         if (entry.contains("scale"))
-    //             scale = entry["scale"];
-    //     }
+    void setScale(float scale){
+        if (locationsFile.contains(this->getString())) {
+            auto entry = locationsFile[this->getString()];
+            if (entry.contains("scale"))
+                scale = entry["scale"];
+        }
 
-    //     CCLabelBMFont::setScale(scale);
-    // }
+        CCLabelBMFont::setScale(scale);
+    }
 
-    // static CCLabelBMFont* create(char const* str, char const* fnt){
-    //     log::debug("{}", fnt);
-    //     if(ghc::filesystem::exists(Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt))) {
-    //         log::debug("new font {}", (Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt)).string().c_str());
-    //         return CCLabelBMFont::create(str, (Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt)).string().c_str());
-    //     }
+    static CCLabelBMFont* create(char const* str, char const* fnt){
+        if(ghc::filesystem::exists(Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt))) {
+            log::debug("new font {}", (Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt)).string().c_str());
+            return CCLabelBMFont::create(str, (Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt)).string().c_str());
+        }
 
-    //     return CCLabelBMFont::create(str, fnt);
-    // }
+        return CCLabelBMFont::create(str, fnt);
+    }
 
     bool initWithString(const char* str, const char* fnt, float width, cocos2d::CCTextAlignment align, cocos2d::CCPoint offset){
         log::info("initwithstring {}", fnt);
@@ -431,10 +397,6 @@ class $modify(CCLabelBMFont){
 
 class $modify(CCTextureCache){
     CCTexture2D* addImage(char const* filename, bool idk){
-        // if(std::find(hooks::fonts.begin(), hooks::fonts.end(), filename) != hooks::fonts.end() && ghc::filesystem::exists(Mod::get()->getResourcesDir() / filename)) {
-        //     return CCTextureCache::addImage((Mod::get()->getResourcesDir() / filename).string().c_str(), idk);
-        // }
-
         auto newPath = Mod::get()->getResourcesDir() / gdlutils::getQualityString(filename);
         if (ghc::filesystem::exists(newPath)) {
             return CCTextureCache::addImage(newPath.string().c_str(), idk);
@@ -446,15 +408,23 @@ class $modify(CCTextureCache){
 
 void (__thiscall* std_string_assign_o)(void* self, char* src, size_t len);
 void std_string_assign_hk(void* self, char* src, size_t len) {
-	// return std
-	// log::debug("Hello world {} {}", src, len);
-	// std_string_assign_hk(self, src, len);
+/*     
+        Зачем нужны эти хуки:
+        В некоторых случаях в гд, функция GDString::assign вызывается в заданной длинной,
+        которая ограничивает длинну строки, но переведенная строка может быть длиннее чем оригинальная.
+        Было бы намного сложнее пропатчить все длины строк, учитывая то, что не везде указывается длина строки.
+        В общем намного легче хукнуть эту функция и установить новую длину строки.
+
+        Why this is required:
+        In some places of gd you can see GDString::assign called with fixed length
+        which limits strings to the length it was in the game but the translated strings may be longer than the original ones.
+        It is also pretty difficult to patch the length as it is not used in all calls and i would somehow need to find places to patch
+        So it is easier to hook it and just set it to the string length instead of the fixed length
+*/
 	std_string_assign_o(self, src, strlen(src));
 }
 
 $execute {
-	// static const char* test = "Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL! Hello GDL!\nThis is longer than the original string!";
-	// Mod::get()->patch((void*)(base::get() + 0x277DBB), ByteVector((uint8_t*)&test, (uint8_t*)&test + 4));
     initPatches();
 
 	std_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + 0x1BB10);
