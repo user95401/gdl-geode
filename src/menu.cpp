@@ -80,8 +80,9 @@ void GDLMenu::setup() {
     auto raelc = gdlutils::createMenuProfile("Raelc", "raelc.png"_spr, false);
     auto noname = gdlutils::createMenuProfile("Pixelsuft", "noname.png"_spr, false);
     auto uulti = gdlutils::createMenuProfile("Astragel", "uulti.png"_spr, false);
+    auto kolyah35 = gdlutils::createMenuProfile("Kolyah35", "kolyah35.png"_spr, false);
 
-    auto row2 = CCMenu::create(max, raelc, noname, uulti, nullptr);
+    auto row2 = CCMenu::create(max, raelc, noname, uulti, kolyah35, nullptr);
     m_page1->addChild(row2);
     row2->alignItemsHorizontallyWithPadding(55);
     row2->setPosition({0, -30});

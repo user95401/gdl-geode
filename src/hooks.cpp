@@ -12,6 +12,7 @@
 #include <Geode/modify/LevelLeaderboard.hpp>
 #include <Geode/modify/GauntletSelectLayer.hpp>
 #include <Geode/modify/GauntletNode.hpp>
+#include <Geode/modify/MenuLayer.hpp>
 
 using namespace geode::prelude;
 nlohmann::json locationsFile;
@@ -67,37 +68,22 @@ void initPatches() {
 #endif
 }
 
-// #if defined(GDL_INDEV) && defined(GEODE_IS_WINDOWS)
-// class $modify(CCKeyboardDispatcher){
-//     bool dispatchKeyboardMSG(enumKeyCodes key, bool down){
-//         if (key == KEY_P && down) {
-//             hooks::locationsFile = gdlutils::loadJson("ru_ru_locations.json");
-//             hooks::initPatches();
+class $modify(MenuLayer){
+    bool init(){
+        if(!MenuLayer::init())
+            return false;
 
-//             return true;
-//         }
+        auto winSize = CCDirector::sharedDirector()->getWinSize();
 
-//         return CCKeyboardDispatcher::dispatchKeyboardMSG(key, down);
-//     }
-// };
-// #endif
+        CCLabelBMFont* text = CCLabelBMFont::create("GDL v1.2", "goldFont.fnt");
+        this->addChild(text);
+        text->setScale(0.75f);
+        text->setID("gdl-version");
+        text->setPosition({winSize.width / 2.f, winSize.height - 14.f});
 
-// class $modify(MenuLayer){
-//     bool init(){
-//         if(!MenuLayer::init())
-//             return false;
-
-//         auto winSize = CCDirector::sharedDirector()->getWinSize();
-
-//         CCLabelBMFont* text = CCLabelBMFont::create("GDL v1.1.2", "goldFont.fnt");
-//         this->addChild(text);
-//         text->setScale(0.75f);
-//         text->setID("gdl-version");
-//         text->setPosition({winSize.width / 2.f, winSize.height - 14.f});
-
-//         return true;
-//     }
-// };
+        return true;
+    }
+};
 
 // #ifdef GEODE_IS_WINDOWS
 // class $modify(TextArea){
