@@ -9,6 +9,9 @@
 #include <Geode/modify/CCApplication.hpp>
 #include <Geode/modify/OptionsLayer.hpp>
 #include <Geode/modify/LoadingLayer.hpp>
+#include <Geode/modify/LevelLeaderboard.hpp>
+#include <Geode/modify/GauntletSelectLayer.hpp>
+#include <Geode/modify/GauntletNode.hpp>
 
 using namespace geode::prelude;
 nlohmann::json locationsFile;
@@ -147,86 +150,92 @@ void initPatches() {
 // };
 // #endif
 
-// class $modify(GauntletNode){
-//     bool init(GJMapPack* mapPack){
-//         if (!GauntletNode::init(mapPack)) return false;
+class $modify(GauntletNode){
+    bool init(GJMapPack* mapPack){
+        if (!GauntletNode::init(mapPack)) return false;
 
-//         auto packID = mapPack->m_packID;
-//         if (gdlutils::shouldReverseGauntlet(packID)) {
-//             auto nameLabel = reinterpret_cast<CCLabelBMFont*>(this->getChildren()->objectAtIndex(3));
-//             auto nameShadow = reinterpret_cast<CCLabelBMFont*>(this->getChildren()->objectAtIndex(5));
-//             auto gauntletLabel = reinterpret_cast<CCLabelBMFont*>(this->getChildren()->objectAtIndex(4));
-//             auto gauntletShadow = reinterpret_cast<CCLabelBMFont*>(this->getChildren()->objectAtIndex(6));
+        auto packID = mapPack->m_packID;
+        if (gdlutils::shouldReverseGauntlet(packID)) {
+            auto nameLabel = reinterpret_cast<CCLabelBMFont*>(this->getChildren()->objectAtIndex(3));
+            auto nameShadow = reinterpret_cast<CCLabelBMFont*>(this->getChildren()->objectAtIndex(5));
+            auto gauntletLabel = reinterpret_cast<CCLabelBMFont*>(this->getChildren()->objectAtIndex(4));
+            auto gauntletShadow = reinterpret_cast<CCLabelBMFont*>(this->getChildren()->objectAtIndex(6));
 
-//             nameLabel->setPositionY(75);
-//             nameShadow->setPositionY(72);
-//             gauntletLabel->setPositionY(94);
-//             gauntletShadow->setPositionY(91);
+            nameLabel->setPositionY(75);
+            nameShadow->setPositionY(72);
+            gauntletLabel->setPositionY(94);
+            gauntletShadow->setPositionY(91);
 
-//             nameLabel->setScale(0.45f);
-//             nameShadow->setScale(0.45f);
-//             gauntletLabel->setScale(0.62f);
-//             gauntletShadow->setScale(0.62f);
-//         }
+            nameLabel->setScale(0.45f);
+            nameShadow->setScale(0.45f);
+            gauntletLabel->setScale(0.62f);
+            gauntletShadow->setScale(0.62f);
+        }
 
-//         return true;
-//     }
-// };
+        return true;
+    }
+};
 
-// class $modify(GauntletSelectLayer){
-//     bool init(int gauntletType){
-//         if (!GauntletSelectLayer::init(gauntletType))
-//             return false;
 
-//         CCLabelBMFont* nameLabel = nullptr;
-//         CCLabelBMFont* shadowLabel = nullptr;
+// Что это за DooM?????
+class $modify(GauntletSelectLayer){
+    bool init(int gauntletType){
+        if (!GauntletSelectLayer::init(gauntletType))
+            return false;
 
-//         // you cant do it with class members or just getChildren()->objectAtIndex()
-//         CCARRAY_FOREACH_B_TYPE(this->getChildren(), node, CCNode) {
-//             if (dynamic_cast<CCLabelBMFont*>(node)) {
-//                 if (nameLabel == nullptr)
-//                     nameLabel = reinterpret_cast<CCLabelBMFont*>(node);
-//                 else if (shadowLabel == nullptr)
-//                     shadowLabel = reinterpret_cast<CCLabelBMFont*>(node);
-//             }
-//         }
+        CCLabelBMFont* nameLabel = nullptr;
+        CCLabelBMFont* shadowLabel = nullptr;
 
-//         auto gauntletName = gdlutils::splitString(nameLabel->getString(), ' ')[0];
+        // you cant do it with class members or just getChildren()->objectAtIndex()
+        CCARRAY_FOREACH_B_TYPE(this->getChildren(), node, CCNode) {
+            if (dynamic_cast<CCLabelBMFont*>(node)) {
+                if (nameLabel == nullptr)
+                    nameLabel = reinterpret_cast<CCLabelBMFont*>(node);
+                else if (shadowLabel == nullptr)
+                    shadowLabel = reinterpret_cast<CCLabelBMFont*>(node);
+            }
+        }
+
+        // ------------------
+        // crash start here 
+        // -----------------
+
+        // auto gauntletName = gdlutils::splitString(nameLabel->getString(), ' ')[0];
         
-//         std::string newName;
+        // std::string newName;
 
-//         if(gdlutils::shouldReverseGauntlet(gauntletType)){
-//             newName = fmt::format("Остров {}", gauntletName);
-//         }else{
-//             newName = fmt::format("{} Остров", gauntletName);
-//         }
+        // if(gdlutils::shouldReverseGauntlet(gauntletType)){
+        //     newName = fmt::format("Остров {}", gauntletName);
+        // }else{
+        //     newName = fmt::format("{} Остров", gauntletName);
+        // }
 
-//         nameLabel->setString(newName.c_str());
-//         shadowLabel->setString(newName.c_str());
+        // nameLabel->setString(newName.c_str());
+        // shadowLabel->setString(newName.c_str());
 
-//         return true;
-//     }
-// };
+        return true;
+    }
+};
 
-// class $modify(LevelLeaderboard){
-//     bool init(GJGameLevel* lvl, LevelLeaderboardType type){
-//         if (!LevelLeaderboard::init(lvl, type))
-//             return false;
+class $modify(LevelLeaderboard){
+    bool init(GJGameLevel* lvl, LevelLeaderboardType type, LevelLeaderboardMode mode){
+        if (!LevelLeaderboard::init(lvl, type, mode))
+            return false;
 
-//         CCLabelBMFont* lbl = nullptr;
+        CCLabelBMFont* lbl = nullptr;
 
-//         CCARRAY_FOREACH_B_TYPE(dynamic_cast<CCNode*>(this->getChildren()->objectAtIndex(0))->getChildren(), node, CCNode) {
-//             if (dynamic_cast<CCLabelBMFont*>(node)) {
-//                 if (lbl == nullptr)
-//                     lbl = reinterpret_cast<CCLabelBMFont*>(node);
-//             }
-//         }
+        CCARRAY_FOREACH_B_TYPE(dynamic_cast<CCNode*>(this->getChildren()->objectAtIndex(0))->getChildren(), node, CCNode) {
+            if (dynamic_cast<CCLabelBMFont*>(node)) {
+                if (lbl == nullptr)
+                    lbl = reinterpret_cast<CCLabelBMFont*>(node);
+            }
+        }
 
-//         lbl->setString(fmt::format("Таблица Лидеров для {}", lvl->m_levelName.c_str()).c_str());
+        lbl->setString(fmt::format("Таблица Лидеров для {}", lvl->m_levelName.c_str()).c_str());
 
-//         return true;
-//     }
-// };
+        return true;
+    }
+};
 
 class $modify(LoadingLayer){
     void loadAssets(){
