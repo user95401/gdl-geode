@@ -1,36 +1,35 @@
-#include "hooks.hpp"
-#include "coloring.hpp"
-#include "menu.hpp"
 #include <utf8.h>
+#include "utils.hpp"
+#include "menu.hpp"
 
 #include <Geode/Geode.hpp>
-#include <Geode/modify/CCKeyboardDispatcher.hpp>
-#include <Geode/modify/MenuLayer.hpp>
-#include <Geode/modify/GDString.hpp>
-#include <Geode/modify/TextArea.hpp>
-#include <Geode/modify/CCApplication.hpp>
-#include <Geode/modify/AchievementBar.hpp>
-#include <Geode/modify/GauntletNode.hpp>
-#include <Geode/modify/CCNode.hpp>
 #include <Geode/modify/CCLabelBMFont.hpp>
-#include <Geode/modify/GauntletSelectLayer.hpp>
-#include <Geode/modify/LevelLeaderboard.hpp>
-#include <Geode/modify/LoadingLayer.hpp>
-#include <Geode/modify/OptionsLayer.hpp>
 #include <Geode/modify/CCTextureCache.hpp>
-#include <Geode/modify/CCSpriteFrameCache.hpp>
-#include <Geode/modify/MultilineBitmapFont.hpp>
+#include <Geode/modify/CCNode.hpp>
+#include <Geode/modify/CCApplication.hpp>
+#include <Geode/modify/OptionsLayer.hpp>
+#include <Geode/modify/LoadingLayer.hpp>
+#include <Geode/modify/LevelLeaderboard.hpp>
+#include <Geode/modify/GauntletSelectLayer.hpp>
+#include <Geode/modify/GauntletNode.hpp>
+#include <Geode/modify/MenuLayer.hpp>
 
 using namespace geode::prelude;
+nlohmann::json locationsFile;
+std::map<char const*, char const*> const urls = {
+    {"http://robtopgames.com/blog/2017/02/01/geometry-dash-newgrounds", "https://www.gdlocalisation.uk/gd/blog/ru/#newgrounds_start"},
+    {"http://www.boomlings.com/files/GJGuide.pdf", "https://www.gdlocalisation.uk/gd/gjguide/ru/gjguide_ru.pdf"},
+    {"http://www.robtopgames.com/gd/faq", "https://www.gdlocalisation.uk/gd/blog/ru"}
+};
 
-void hooks::initPatches() {
+void initPatches() {
     static std::vector<std::string> strings;
     
+	locationsFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_ru_locations.json").string());
     auto langFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_ru.json").string());
 
     strings.clear();
     strings.reserve(langFile.size());
-
 
 #ifdef GEODE_IS_WINDOWS
     auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "gdl_patches-windows.json").string());
@@ -69,21 +68,6 @@ void hooks::initPatches() {
 #endif
 }
 
-#if defined(GDL_INDEV) && defined(GEODE_IS_WINDOWS)
-class $modify(CCKeyboardDispatcher){
-    bool dispatchKeyboardMSG(enumKeyCodes key, bool down){
-        if (key == KEY_P && down) {
-            hooks::locationsFile = gdlutils::loadJson("ru_ru_locations.json");
-            hooks::initPatches();
-
-            return true;
-        }
-
-        return CCKeyboardDispatcher::dispatchKeyboardMSG(key, down);
-    }
-};
-#endif
-
 class $modify(MenuLayer){
     bool init(){
         if(!MenuLayer::init())
@@ -91,7 +75,7 @@ class $modify(MenuLayer){
 
         auto winSize = CCDirector::sharedDirector()->getWinSize();
 
-        CCLabelBMFont* text = CCLabelBMFont::create("GDL v1.1.2", "goldFont.fnt");
+        CCLabelBMFont* text = CCLabelBMFont::create("GDL v1.2", "goldFont.fnt");
         this->addChild(text);
         text->setScale(0.75f);
         text->setID("gdl-version");
@@ -101,79 +85,56 @@ class $modify(MenuLayer){
     }
 };
 
-#ifdef GEODE_IS_WINDOWS
-class $modify(GDString){
-/*     
-        Зачем нужны эти хуки:
-        В некоторых случаях в гд, функция GDString::assign вызывается в заданной длинной,
-        которая ограничивает длинну строки, но переведенная строка может быть длиннее чем оригинальная.
-        Было бы намного сложнее пропатчить все длины строк, учитывая то, что не везде указывается длина строки.
-        В общем намного легче хукнуть эту функция и установить новую длину строки.
+// #ifdef GEODE_IS_WINDOWS
+// class $modify(TextArea){
+//     void setString(gd::string str){
+//         auto noTagsStr = coloring::removeTags(str);
 
-        Why this is required:
-        In some places of gd you can see GDString::assign called with fixed length
-        which limits strings to the length it was in the game but the translated strings may be longer than the original ones.
-        It is also pretty difficult to patch the length as it is not used in all calls and i would somehow need to find places to patch
-        So it is easier to hook it and just set it to the string length instead of the fixed length
-*/
-    GDString& winAssign(char const* ptr, size_t size){
-        return GDString::winAssign(ptr, strlen(ptr));
-    }
+//         auto lines = gdlutils::splitByWidth(noTagsStr, this->m_width, this->m_fontFile.c_str());
 
-    GDString& operatorPlus(char const* ptr, size_t size){
-        return GDString::operatorPlus(ptr, strlen(ptr));
-    }
-};
+//         if (lines.size() == 0)
+//             return;
 
-class $modify(TextArea){
-    void setString(gd::string str){
-        auto noTagsStr = coloring::removeTags(str);
+//         std::string linesGen(lines.size(), '\n');
+//         TextArea::setString(gd::string(linesGen));
 
-        auto lines = gdlutils::splitByWidth(noTagsStr, this->m_width, this->m_fontFile.c_str());
+//         CCArray* letterArray = CCArray::create();
+//         CCARRAY_FOREACH_B_TYPE(this->m_label->getChildren(), lbl, CCLabelBMFont) {
+//             lbl->setString(lines[ix].c_str());
+//             lbl->setAnchorPoint({this->m_anchorPoint.x, lbl->getAnchorPoint().y});
+//             letterArray->addObjectsFromArray(lbl->getChildren());
+//         }
 
-        if (lines.size() == 0)
-            return;
+//         this->m_label->m_letterArray->removeAllObjects();
+//         this->m_label->m_letterArray->addObjectsFromArray(letterArray);
 
-        std::string linesGen(lines.size(), '\n');
-        TextArea::setString(gd::string(linesGen));
+//         if (!this->m_disableColor)
+//             coloring::parseTags(str, letterArray);
+//     }
+// };
 
-        CCArray* letterArray = CCArray::create();
-        CCARRAY_FOREACH_B_TYPE(this->m_label->getChildren(), lbl, CCLabelBMFont) {
-            lbl->setString(lines[ix].c_str());
-            lbl->setAnchorPoint({this->m_anchorPoint.x, lbl->getAnchorPoint().y});
-            letterArray->addObjectsFromArray(lbl->getChildren());
-        }
+// class $modify(AchievementBar){
+//     bool init(char const* title, char const* desc, char const* icon, bool quest){
+//         if (!AchievementBar::init(title, desc, icon, quest))
+//             return false;
 
-        this->m_label->m_letterArray->removeAllObjects();
-        this->m_label->m_letterArray->addObjectsFromArray(letterArray);
+//         auto winSize = CCDirector::sharedDirector()->getWinSize();
 
-        if (!this->m_disableColor)
-            coloring::parseTags(str, letterArray);
-    }
-};
+//         this->m_icon->setPositionX(-110);
 
-class $modify(AchievementBar){
-    bool init(char const* title, char const* desc, char const* icon, bool quest){
-        if (!AchievementBar::init(title, desc, icon, quest))
-            return false;
+//         this->m_achDesc->setAnchorPoint({0.0, this->m_achDesc->getAnchorPoint().y});
+//         this->m_achDesc->setPositionX(0);
+//         CCARRAY_FOREACH_B_TYPE(this->m_achDesc->getChildren(), lbl, CCLabelBMFont) {
+//             lbl->setAnchorPoint({0.0, lbl->getAnchorPoint().y});
+//             lbl->setPositionX(this->m_achDesc->convertToNodeSpaceAR({winSize.width / 2 - 75, 0.0}).x);
+//         }
 
-        auto winSize = CCDirector::sharedDirector()->getWinSize();
+//         this->m_achTitle->setPosition({this->m_achDesc->getParent()->convertToNodeSpaceAR({winSize.width / 2 - 75, 0.0}).x, 22});
 
-        this->m_icon->setPositionX(-110);
-
-        this->m_achDesc->setAnchorPoint({0.0, this->m_achDesc->getAnchorPoint().y});
-        this->m_achDesc->setPositionX(0);
-        CCARRAY_FOREACH_B_TYPE(this->m_achDesc->getChildren(), lbl, CCLabelBMFont) {
-            lbl->setAnchorPoint({0.0, lbl->getAnchorPoint().y});
-            lbl->setPositionX(this->m_achDesc->convertToNodeSpaceAR({winSize.width / 2 - 75, 0.0}).x);
-        }
-
-        this->m_achTitle->setPosition({this->m_achDesc->getParent()->convertToNodeSpaceAR({winSize.width / 2 - 75, 0.0}).x, 22});
-
-        return true;
-    }
-};
-#endif
+//         return true;
+//     }
+// };
+// #endif
 
 class $modify(GauntletNode){
     bool init(GJMapPack* mapPack){
@@ -201,6 +162,8 @@ class $modify(GauntletNode){
     }
 };
 
+
+// Что это за DooM?????
 class $modify(GauntletSelectLayer){
     bool init(int gauntletType){
         if (!GauntletSelectLayer::init(gauntletType))
@@ -219,26 +182,30 @@ class $modify(GauntletSelectLayer){
             }
         }
 
-        auto gauntletName = gdlutils::splitString(nameLabel->getString(), ' ')[0];
+        // ------------------
+        // crash start here 
+        // -----------------
+
+        // auto gauntletName = gdlutils::splitString(nameLabel->getString(), ' ')[0];
         
-        std::string newName;
+        // std::string newName;
 
-        if(gdlutils::shouldReverseGauntlet(gauntletType)){
-            newName = fmt::format("Остров {}", gauntletName);
-        }else{
-            newName = fmt::format("{} Остров", gauntletName);
-        }
+        // if(gdlutils::shouldReverseGauntlet(gauntletType)){
+        //     newName = fmt::format("Остров {}", gauntletName);
+        // }else{
+        //     newName = fmt::format("{} Остров", gauntletName);
+        // }
 
-        nameLabel->setString(newName.c_str());
-        shadowLabel->setString(newName.c_str());
+        // nameLabel->setString(newName.c_str());
+        // shadowLabel->setString(newName.c_str());
 
         return true;
     }
 };
 
 class $modify(LevelLeaderboard){
-    bool init(GJGameLevel* lvl, LevelLeaderboardType type){
-        if (!LevelLeaderboard::init(lvl, type))
+    bool init(GJGameLevel* lvl, LevelLeaderboardType type, LevelLeaderboardMode mode){
+        if (!LevelLeaderboard::init(lvl, type, mode))
             return false;
 
         CCLabelBMFont* lbl = nullptr;
@@ -257,7 +224,7 @@ class $modify(LevelLeaderboard){
 };
 
 class $modify(LoadingLayer){
-    void loadAssets(){   
+    void loadAssets(){
         if(this->m_loadStep == 10 && Mod::get()->getSettingValue<bool>("framesTranslation")){
             auto plist = (Mod::get()->getResourcesDir() / gdlutils::getQualityString("GDL_TranslatedFrames.plist")).string();
             auto png = (Mod::get()->getResourcesDir() / gdlutils::getQualityString("GDL_TranslatedFrames.png")).string();
@@ -279,7 +246,7 @@ class $modify(OptionsLayer){
     void customSetup(){
         OptionsLayer::customSetup();
 
-        auto spr = CCSprite::createWithSpriteFrameName("gdlIcon.png");
+        auto spr = CCSprite::createWithSpriteFrameName("gdlIcon.png"_spr);
         spr->setScale(1.25f);
 
         auto btn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(GDLMenu::openLayer));
@@ -292,81 +259,81 @@ class $modify(OptionsLayer){
     }
 };
 
-#ifdef GEODE_IS_ANDROID
-std::string g_currentFont;
+// #ifdef GEODE_IS_ANDROID
+// std::string g_currentFont;
 
-class $modify(MultilineBitmapFont) {
-    bool initWithFont(const char* fontName, gd::string str, float scale, float width, CCPoint anchorPoint, int unk, bool bColourDisabled) {
-        g_currentFont = fontName;
-        if (!MultilineBitmapFont::initWithFont(fontName, str, scale, width, anchorPoint, unk, bColourDisabled))
-            return false;
+// class $modify(MultilineBitmapFont) {
+//     bool initWithFont(const char* fontName, gd::string str, float scale, float width, CCPoint anchorPoint, int unk, bool bColourDisabled) {
+//         g_currentFont = fontName;
+//         if (!MultilineBitmapFont::initWithFont(fontName, str, scale, width, anchorPoint, unk, bColourDisabled))
+//             return false;
 
-        if (!bColourDisabled) {
-            auto letters = cocos2d::CCArray::create();
-            for (int i = 0; i < this->getChildrenCount(); i++) {
-                auto lbl = (CCNode*)(this->getChildren()->objectAtIndex(i));
-                letters->addObjectsFromArray(lbl->getChildren());
-            }
+//         if (!bColourDisabled) {
+//             auto letters = cocos2d::CCArray::create();
+//             for (int i = 0; i < this->getChildrenCount(); i++) {
+//                 auto lbl = (CCNode*)(this->getChildren()->objectAtIndex(i));
+//                 letters->addObjectsFromArray(lbl->getChildren());
+//             }
 
-            coloring::parseTags(str, letters);
-        }
+//             coloring::parseTags(str, letters);
+//         }
 
-        return true;
-    }
+//         return true;
+//     }
 
-    gd::string readColorInfo(gd::string str) {
-        return coloring::removeTags(str);
-    }
+//     gd::string readColorInfo(gd::string str) {
+//         return coloring::removeTags(str);
+//     }
 
-    gd::string stringWithMaxWidth(gd::string str, float scaledWidth, float scale) {
-        auto lbl = CCLabelBMFont::create("", g_currentFont.c_str());
-        lbl->setScale(scale);
+//     gd::string stringWithMaxWidth(gd::string str, float scaledWidth, float scale) {
+//         auto lbl = CCLabelBMFont::create("", g_currentFont.c_str());
+//         lbl->setScale(scale);
 
-        std::string strr = str.c_str();
+//         std::string strr = str.c_str();
 
-        auto hasNL = strr.find("\n") != std::string::npos;
-        auto line = hasNL ? gdlutils::splitString(str, '\n')[0] : strr;
+//         auto hasNL = strr.find("\n") != std::string::npos;
+//         auto line = hasNL ? gdlutils::splitString(str, '\n')[0] : strr;
 
-        float width = scaledWidth / CCDirector::sharedDirector()->getContentScaleFactor();
+//         float width = scaledWidth / CCDirector::sharedDirector()->getContentScaleFactor();
 
-        bool overflown = false;
-        std::string current;
+//         bool overflown = false;
+//         std::string current;
 
-        auto b = line.begin();
-        auto e = line.end();
-        while (b != e) {
-            auto cp = utf8::next(b, e);
-            utf8::append((char32_t)cp, current);
+//         auto b = line.begin();
+//         auto e = line.end();
+//         while (b != e) {
+//             auto cp = utf8::next(b, e);
+//             utf8::append((char32_t)cp, current);
 
-            lbl->setString(current.c_str());
+//             lbl->setString(current.c_str());
 
-            if (lbl->getScaledContentSize().width > width) {
-                overflown = true;
-                break;
-            }
-        }
+//             if (lbl->getScaledContentSize().width > width) {
+//                 overflown = true;
+//                 break;
+//             }
+//         }
 
-        if (overflown) {
-            if (current.find(' ') != std::string::npos) {
-                auto words = gdlutils::splitString(current, ' ');
-                words.pop_back();
-                current = gdlutils::joinStrings(words, " ");
-                current = gdlutils::joinStrings(words, " ") + " ";
-            }
-        } else if (hasNL) {
-            current += " ";
-        }
+//         if (overflown) {
+//             if (current.find(' ') != std::string::npos) {
+//                 auto words = gdlutils::splitString(current, ' ');
+//                 words.pop_back();
+//                 current = gdlutils::joinStrings(words, " ");
+//                 current = gdlutils::joinStrings(words, " ") + " ";
+//             }
+//         } else if (hasNL) {
+//             current += " ";
+//         }
 
-        return gd::string(current);
-    }
-};
-#endif
+//         return gd::string(current);
+//     }
+// };
+// #endif
 
 // cocos hooks
 class $modify(CCApplication){
     void openURL(char const* url){
-        if(hooks::urls.contains(url)){
-            return CCApplication::openURL(hooks::urls.at(url));
+        if(urls.contains(url)){
+            return CCApplication::openURL(urls.at(url));
         }
 
         CCApplication::openURL(url);
@@ -380,8 +347,8 @@ class $modify(CCNode){
         if (!lbl)
             return CCNode::setPosition(p);
 
-        if (hooks::locationsFile.contains(lbl->getString())) {
-            auto entry = hooks::locationsFile[lbl->getString()];
+        if (locationsFile.contains(lbl->getString())) {
+            auto entry = locationsFile[lbl->getString()];
             if (entry.contains("x"))
                 p.x += entry["x"].get<float>();
             if (entry.contains("y"))
@@ -394,8 +361,8 @@ class $modify(CCNode){
 
 class $modify(CCLabelBMFont){
     void setScale(float scale){
-        if (hooks::locationsFile.contains(this->getString())) {
-            auto entry = hooks::locationsFile[this->getString()];
+        if (locationsFile.contains(this->getString())) {
+            auto entry = locationsFile[this->getString()];
             if (entry.contains("scale"))
                 scale = entry["scale"];
         }
@@ -403,17 +370,21 @@ class $modify(CCLabelBMFont){
         CCLabelBMFont::setScale(scale);
     }
 
-    CCLabelBMFont* create(char const* str, char const* fnt){
+    static CCLabelBMFont* create(char const* str, char const* fnt){
         if(ghc::filesystem::exists(Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt))) {
-            return CCLabelBMFont::create(str, (Mod::get()->getResourcesDir() / fnt).string().c_str());
+            log::debug("new font {}", (Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt)).string().c_str());
+            return CCLabelBMFont::create(str, (Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt)).string().c_str());
         }
 
         return CCLabelBMFont::create(str, fnt);
     }
 
     bool initWithString(const char* str, const char* fnt, float width, cocos2d::CCTextAlignment align, cocos2d::CCPoint offset){
-        if(ghc::filesystem::exists(Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt))) {
-            return CCLabelBMFont::initWithString(str, (Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt)).string().c_str(), width, align, offset);
+        log::info("initwithstring {}", fnt);
+        auto newFont = Mod::get()->getResourcesDir() / gdlutils::getQualityString(fnt);
+        if(ghc::filesystem::exists(newFont)) {
+            log::info("new font {}", newFont.string());
+            return CCLabelBMFont::initWithString(str, newFont.string().c_str(), width, align, offset);
         }
 
         return CCLabelBMFont::initWithString(str, fnt, width, align, offset);
@@ -422,10 +393,42 @@ class $modify(CCLabelBMFont){
 
 class $modify(CCTextureCache){
     CCTexture2D* addImage(char const* filename, bool idk){
-        if(std::find(hooks::fonts.begin(), hooks::fonts.end(), filename) != hooks::fonts.end() && ghc::filesystem::exists(Mod::get()->getResourcesDir() / filename)) {
-            return CCTextureCache::addImage((Mod::get()->getResourcesDir() / filename).string().c_str(), idk);
+        auto newPath = Mod::get()->getResourcesDir() / gdlutils::getQualityString(filename);
+        if (ghc::filesystem::exists(newPath)) {
+            return CCTextureCache::addImage(newPath.string().c_str(), idk);
         }
 
         return CCTextureCache::addImage(filename, idk);
     }
 };
+
+void (__thiscall* std_string_assign_o)(void* self, char* src, size_t len);
+void std_string_assign_hk(void* self, char* src, size_t len) {
+/*     
+        Зачем нужны эти хуки:
+        В некоторых случаях в гд, функция GDString::assign вызывается в заданной длинной,
+        которая ограничивает длинну строки, но переведенная строка может быть длиннее чем оригинальная.
+        Было бы намного сложнее пропатчить все длины строк, учитывая то, что не везде указывается длина строки.
+        В общем намного легче хукнуть эту функция и установить новую длину строки.
+
+        Why this is required:
+        In some places of gd you can see GDString::assign called with fixed length
+        which limits strings to the length it was in the game but the translated strings may be longer than the original ones.
+        It is also pretty difficult to patch the length as it is not used in all calls and i would somehow need to find places to patch
+        So it is easier to hook it and just set it to the string length instead of the fixed length
+*/
+	std_string_assign_o(self, src, strlen(src));
+}
+
+$execute {
+    initPatches();
+
+	std_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + 0x1BB10);
+	
+	Mod::get()->addHook(
+		(void*)(base::get() + 0x1BB10),
+		&std_string_assign_hk,
+		"gd::string::assign",
+		tulip::hook::TulipConvention::Thiscall
+	);
+}

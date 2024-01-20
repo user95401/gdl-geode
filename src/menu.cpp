@@ -44,12 +44,12 @@ void GDLMenu::setup() {
 
     auto dispatcher = CCDirector::sharedDirector()->getTouchDispatcher();
     dispatcher->setForcePrio(true);
-    dispatcher->incrementForcePrio(200);
+    // dispatcher->incrementForcePrio(200);
     dispatcher->addTargetedDelegate(this, 200, true);
 
     // title
 
-    auto title = CCSprite::createWithSpriteFrameName("gdlLogo.png");
+    auto title = CCSprite::createWithSpriteFrameName("gdlLogo.png"_spr);
     title->setScale(1.1f);
     auto titlespr = CCMenuItemSprite::create(title, title, this, menu_selector(GDLMenu::openLink));
     titlespr->runAction(CCRepeatForever::create(CCSequence::create(CCEaseInOut::create(CCScaleTo::create(1.5f, 1.2f), 2.0f),
@@ -65,23 +65,24 @@ void GDLMenu::setup() {
     a1->setScale(0.8f);
     a1->setPositionY(61);
 
-    auto jaan = gdlutils::createMenuProfile("Jaan", "jaan.png", false);
-    auto mye = gdlutils::createMenuProfile("Mye", "mye.png", false);
-    auto demi = gdlutils::createMenuProfile("Demi Sans", "demisans.png", true);
-    auto lukas = gdlutils::createMenuProfile("RayChan", "lukasradon.png", true);
-    auto gus = gdlutils::createMenuProfile("RNMNX", "guschin.png", false);
+    auto jaan = gdlutils::createMenuProfile("Jaan", "jaan.png"_spr, false);
+    auto mye = gdlutils::createMenuProfile("Mye", "mye.png"_spr, false);
+    auto demi = gdlutils::createMenuProfile("Demi Sans", "demisans.png"_spr, true);
+    auto lukas = gdlutils::createMenuProfile("RayChan", "lukasradon.png"_spr, true);
+    auto gus = gdlutils::createMenuProfile("RNMNX", "guschin.png"_spr, false);
 
     auto row1 = CCMenu::create(jaan, mye, demi, lukas, gus, nullptr);
     m_page1->addChild(row1);
     row1->alignItemsHorizontallyWithPadding(55);
     row1->setPosition({0, 26});
 
-    auto max = gdlutils::createMenuProfile("Махимал", "maximal.png", false);
-    auto raelc = gdlutils::createMenuProfile("Raelc", "raelc.png", false);
-    auto noname = gdlutils::createMenuProfile("Pixelsuft", "noname.png", false);
-    auto uulti = gdlutils::createMenuProfile("Astragel", "uulti.png", false);
+    auto max = gdlutils::createMenuProfile("Махимал", "maximal.png"_spr, false);
+    auto raelc = gdlutils::createMenuProfile("Raelc", "raelc.png"_spr, false);
+    auto noname = gdlutils::createMenuProfile("Pixelsuft", "noname.png"_spr, false);
+    auto uulti = gdlutils::createMenuProfile("Astragel", "uulti.png"_spr, false);
+    auto kolyah35 = gdlutils::createMenuProfile("Kolyah35", "kolyah35.png"_spr, false);
 
-    auto row2 = CCMenu::create(max, raelc, noname, uulti, nullptr);
+    auto row2 = CCMenu::create(max, raelc, noname, uulti, kolyah35, nullptr);
     m_page1->addChild(row2);
     row2->alignItemsHorizontallyWithPadding(55);
     row2->setPosition({0, -30});
@@ -164,7 +165,7 @@ void GDLMenu::keyBackClicked() {
 
     auto dispatcher = CCDirector::sharedDirector()->getTouchDispatcher();
     dispatcher->removeDelegate(this);
-    dispatcher->decrementForcePrio(200);
+    // dispatcher->decrementForcePrio(200);
     dispatcher->setForcePrio(false);
 }
 

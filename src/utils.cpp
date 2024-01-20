@@ -173,7 +173,7 @@ void gdlutils::reloadAll(){
 	CCDirector::sharedDirector()->updateContentScale(CCDirector::get()->getLoadedTextureQuality());
 
 	auto gameManager = GameManager::sharedState();
-	gameManager->setQuality(CCDirector::get()->getLoadedTextureQuality());
+	// gameManager->setQuality(CCDirector::get()->getLoadedTextureQuality());
 	CCTexture2D::setDefaultAlphaPixelFormat(kCCTexture2DPixelFormat_RGBA4444);
 	gameManager->reloadAll(false, false, true);
 }
