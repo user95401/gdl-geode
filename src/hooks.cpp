@@ -14,6 +14,8 @@
 #include <Geode/modify/GauntletNode.hpp>
 #include <Geode/modify/MenuLayer.hpp>
 
+#define GD_STRING_ASSIGN_ADDR 0x1B9F0
+
 using namespace geode::prelude;
 nlohmann::json locationsFile;
 std::map<char const*, char const*> const urls = {
@@ -32,19 +34,19 @@ void initPatches() {
     strings.reserve(langFile.size());
 
 #ifdef GEODE_IS_WINDOWS
-    auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "gdl_patches-windows.json").string());
+    // auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "gdl_patches-windows.json").string());
 
-    for (const auto& pair : langFile.items()) {
-        if (!patchFile.contains(pair.key()))
-            continue;
+    // for (const auto& pair : langFile.items()) {
+    //     if (!patchFile.contains(pair.key()))
+    //         continue;
     
-        strings.push_back(pair.value());
+    //     strings.push_back(pair.value());
     
-        for (const auto addr : patchFile[pair.key()]) {
-            const char* str = strings[strings.size() - 1].c_str();
-            Mod::get()->patch((void*)(base::get() + addr), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4));
-        }
-    }
+    //     for (const auto addr : patchFile[pair.key()]) {
+    //         const char* str = strings[strings.size() - 1].c_str();
+    //         Mod::get()->patch((void*)(base::get() + addr), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4));
+    //     }
+    // }
 #elif defined(GEODE_IS_ANDROID)
     auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "gdl_patches-android.json").string());
     
@@ -75,7 +77,7 @@ class $modify(MenuLayer){
 
         auto winSize = CCDirector::sharedDirector()->getWinSize();
 
-        CCLabelBMFont* text = CCLabelBMFont::create("GDL v1.2", "goldFont.fnt");
+        CCLabelBMFont* text = CCLabelBMFont::create("GDL v1.2.0", "goldFont.fnt");
         this->addChild(text);
         text->setScale(0.75f);
         text->setID("gdl-version");
@@ -89,48 +91,48 @@ class $modify(MenuLayer){
 // class $modify(TextArea){
 //     void setString(gd::string str){
 //         auto noTagsStr = coloring::removeTags(str);
-
+//
 //         auto lines = gdlutils::splitByWidth(noTagsStr, this->m_width, this->m_fontFile.c_str());
-
+//
 //         if (lines.size() == 0)
 //             return;
-
+//
 //         std::string linesGen(lines.size(), '\n');
 //         TextArea::setString(gd::string(linesGen));
-
+//
 //         CCArray* letterArray = CCArray::create();
 //         CCARRAY_FOREACH_B_TYPE(this->m_label->getChildren(), lbl, CCLabelBMFont) {
 //             lbl->setString(lines[ix].c_str());
 //             lbl->setAnchorPoint({this->m_anchorPoint.x, lbl->getAnchorPoint().y});
 //             letterArray->addObjectsFromArray(lbl->getChildren());
 //         }
-
+//
 //         this->m_label->m_letterArray->removeAllObjects();
 //         this->m_label->m_letterArray->addObjectsFromArray(letterArray);
-
+//
 //         if (!this->m_disableColor)
 //             coloring::parseTags(str, letterArray);
 //     }
 // };
-
+//
 // class $modify(AchievementBar){
 //     bool init(char const* title, char const* desc, char const* icon, bool quest){
 //         if (!AchievementBar::init(title, desc, icon, quest))
 //             return false;
-
+//
 //         auto winSize = CCDirector::sharedDirector()->getWinSize();
-
+//
 //         this->m_icon->setPositionX(-110);
-
+//
 //         this->m_achDesc->setAnchorPoint({0.0, this->m_achDesc->getAnchorPoint().y});
 //         this->m_achDesc->setPositionX(0);
 //         CCARRAY_FOREACH_B_TYPE(this->m_achDesc->getChildren(), lbl, CCLabelBMFont) {
 //             lbl->setAnchorPoint({0.0, lbl->getAnchorPoint().y});
 //             lbl->setPositionX(this->m_achDesc->convertToNodeSpaceAR({winSize.width / 2 - 75, 0.0}).x);
 //         }
-
+//
 //         this->m_achTitle->setPosition({this->m_achDesc->getParent()->convertToNodeSpaceAR({winSize.width / 2 - 75, 0.0}).x, 22});
-
+//
 //         return true;
 //     }
 // };
@@ -261,58 +263,58 @@ class $modify(OptionsLayer){
 
 // #ifdef GEODE_IS_ANDROID
 // std::string g_currentFont;
-
+//
 // class $modify(MultilineBitmapFont) {
 //     bool initWithFont(const char* fontName, gd::string str, float scale, float width, CCPoint anchorPoint, int unk, bool bColourDisabled) {
 //         g_currentFont = fontName;
 //         if (!MultilineBitmapFont::initWithFont(fontName, str, scale, width, anchorPoint, unk, bColourDisabled))
 //             return false;
-
+//
 //         if (!bColourDisabled) {
 //             auto letters = cocos2d::CCArray::create();
 //             for (int i = 0; i < this->getChildrenCount(); i++) {
 //                 auto lbl = (CCNode*)(this->getChildren()->objectAtIndex(i));
 //                 letters->addObjectsFromArray(lbl->getChildren());
 //             }
-
+//
 //             coloring::parseTags(str, letters);
 //         }
-
+//
 //         return true;
 //     }
-
+//
 //     gd::string readColorInfo(gd::string str) {
 //         return coloring::removeTags(str);
 //     }
-
+//
 //     gd::string stringWithMaxWidth(gd::string str, float scaledWidth, float scale) {
 //         auto lbl = CCLabelBMFont::create("", g_currentFont.c_str());
 //         lbl->setScale(scale);
-
+//
 //         std::string strr = str.c_str();
-
+//
 //         auto hasNL = strr.find("\n") != std::string::npos;
 //         auto line = hasNL ? gdlutils::splitString(str, '\n')[0] : strr;
-
+//
 //         float width = scaledWidth / CCDirector::sharedDirector()->getContentScaleFactor();
-
+//
 //         bool overflown = false;
 //         std::string current;
-
+//
 //         auto b = line.begin();
 //         auto e = line.end();
 //         while (b != e) {
 //             auto cp = utf8::next(b, e);
 //             utf8::append((char32_t)cp, current);
-
+//
 //             lbl->setString(current.c_str());
-
+//
 //             if (lbl->getScaledContentSize().width > width) {
 //                 overflown = true;
 //                 break;
 //             }
 //         }
-
+//
 //         if (overflown) {
 //             if (current.find(' ') != std::string::npos) {
 //                 auto words = gdlutils::splitString(current, ' ');
@@ -323,7 +325,7 @@ class $modify(OptionsLayer){
 //         } else if (hasNL) {
 //             current += " ";
 //         }
-
+//
 //         return gd::string(current);
 //     }
 // };
@@ -423,12 +425,12 @@ void std_string_assign_hk(void* self, char* src, size_t len) {
 $execute {
     initPatches();
 
-	std_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + 0x1BB10);
+	std_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + GD_STRING_ASSIGN_ADDR);
 	
-	Mod::get()->addHook(
-		(void*)(base::get() + 0x1BB10),
-		&std_string_assign_hk,
-		"gd::string::assign",
-		tulip::hook::TulipConvention::Thiscall
-	);
+	// Mod::get()->hook(
+	// 	(void*)(base::get() + GD_STRING_ASSIGN_ADDR),
+	// 	&std_string_assign_hk,
+	// 	"gd::string::assign",
+	// 	tulip::hook::TulipConvention::Thiscall
+	// );
 }
