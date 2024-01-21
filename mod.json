@@ -1,42 +1,18 @@
 {
-	"geode": "2.0.0",
-	"version": "v1.2.0",
+	"geode": "2.0.0-beta.3",
+	"version": "v2.0.0",
 	"gd": "2.204",
 	"id": "gdlteam.gdl",
 	"name": "GDL",
 	"developer": "GDL Team",
-	"description": "",
+	"description": "A mod that translated GD into Russian language",
 	"early-load": true,
 	"resources": {
-		"sprites": [
-			"resources/sprites/*.png",
-			"resources/fonts/*.png",
-			"resources/spritesheets/*.png"
-		],
-		"spritesheets": {
-			"GDL_Sheet": [
-				"resources/spritesheets/GDL_Sheet/*.png"
-			]
-		},
 		"files": [
-			"resources/AchievementsDesc.plist",
 			"resources/*.json",
-			"resources/fonts/*.fnt",
-			"resources/spritesheets/*.plist"
+			"resources/loc/*",
+			"resources/fonts/*"
 		]
 	},
-	"settings": {
-		"framesTranslation": {
-			"name": "Texture translation",
-			"description": "Enables GD sprites translation",
-			"type": "bool",
-			"default": true
-		},
-		"achievementsTranslation": {
-			"name": "Achievements translation",
-			"description": "Enables achievements translation",
-			"type": "bool",
-			"default": true
-		}
-	}
+	"settings": {}
 }

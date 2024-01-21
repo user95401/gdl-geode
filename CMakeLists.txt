@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_OSX_ARCHITECTURES "x86_64")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-project(GDL VERSION 1.2.0)
+project(GDL VERSION 2.0.0)
 
 file(GLOB SOURCES
 	src/*.cpp
@@ -18,7 +18,7 @@ else()
     message(STATUS "Found Geode: $ENV{GEODE_SDK}")
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE libs/)
+target_include_directories(${PROJECT_NAME} PRIVATE libs src)
 
 add_subdirectory(libs/utf8)
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
