@@ -17,35 +17,27 @@ class $modify(MultilineBitmapFont) {
         std::string s;
         auto it = str.begin();
         for (auto i = 0u; i < 10 && it != str.end(); i++) {
-            // utf8::append()
             auto cp = utf8::next(it, str.end());
             utf8::append(cp, s);
         }
         
-        // return MultilineBitmapFont::stringWithMaxWidth(p0, p1, p2);
         return s;
     }
 };
 
 cocos2d::CCBMFontConfiguration* FNTConfigLoadFile_hk(char const* name) {
-    log::debug("font {}", name);
-    auto newName = ghc::filesystem::relative(Mod::get()->getResourcesDir() / name);
-    // std::string newPath = CCFileUtils::sharedFileUtils()->fullPathForFilename(newName.string().c_str(), false);
-    log::debug("!!{}", newName.string());
+    auto newName = Mod::get()->getResourcesDir() / name;
     if (ghc::filesystem::exists(newName)) {
-        log::debug("overriding font {}", newName.string());
-        return cocos2d::FNTConfigLoadFile(newName.string().c_str());
+        return cocos2d::FNTConfigLoadFile(ghc::filesystem::relative(newName).string().c_str());
     }
     return cocos2d::FNTConfigLoadFile(name);
 }
 
 class $modify(CCTextureCache) {
     cocos2d::CCTexture2D* addImage(const char* name, bool idk) {
-        // log::debug("tex {}", name);
-        auto newName = ghc::filesystem::relative(Mod::get()->getResourcesDir() / name);
+        auto newName = Mod::get()->getResourcesDir() / name;
         if (ghc::filesystem::exists(newName)) {
-            log::debug("overriding texture {}", newName.string());
-            return CCTextureCache::addImage(newName.string().c_str(), idk);
+            return CCTextureCache::addImage(ghc::filesystem::relative(newName).string().c_str(), idk);
         }
         return CCTextureCache::addImage(name, idk);
     }
