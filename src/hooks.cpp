@@ -43,8 +43,8 @@ class $modify(CCTextureCache) {
     }
 };
 
-void (__thiscall* std_string_assign_o)(void* self, char* src, size_t len);
-void std_string_assign_hk(void* self, char* src, size_t len) {
+void (__thiscall* gd_string_assign_o)(void* self, char* src, size_t len);
+void gd_string_assign_hk(void* self, char* src, size_t len) {
 /*     
         Зачем нужны эти хуки:
         В некоторых случаях в гд, функция GDString::assign вызывается в заданной длинной,
@@ -58,14 +58,20 @@ void std_string_assign_hk(void* self, char* src, size_t len) {
         It is also pretty difficult to patch the length as it is not used in all calls and i would somehow need to find places to patch
         So it is easier to hook it and just set it to the string length instead of the fixed length
 */
-	std_string_assign_o(self, src, strlen(src));
+	gd_string_assign_o(self, src, strlen(src));
 }
 
 $execute {
     auto addr = GetProcAddress(GetModuleHandleA("libcocos2d.dll"), "?FNTConfigLoadFile@cocos2d@@YAPAVCCBMFontConfiguration@1@PBD@Z");
-    Mod::get()->hook((void*)addr, FNTConfigLoadFile_hk, "cocos2d::FNTConfigLoadFile", tulip::hook::TulipConvention::Cdecl);
+    auto res1 = Mod::get()->hook((void*)addr, FNTConfigLoadFile_hk, "cocos2d::FNTConfigLoadFile", tulip::hook::TulipConvention::Cdecl).err();
+    if (res1 != std::nullopt) {
+        log::error("Failed to hook cocos2d::FNTConfigLoadFile because of: {}", res1);
+    }
     
-    constexpr auto STD_STR_ASSIGN_ADDR = 0x1BB10;
-    std_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + STD_STR_ASSIGN_ADDR);
-    Mod::get()->hook((void*)(base::get() + STD_STR_ASSIGN_ADDR), std_string_assign_hk, "std::string::assign", tulip::hook::TulipConvention::Thiscall);
+    constexpr auto GD_STR_ASSIGN_ADDR = 0x1BB10;
+    gd_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + GD_STR_ASSIGN_ADDR);
+    auto res2 = Mod::get()->hook((void*)(base::get() + GD_STR_ASSIGN_ADDR), gd_string_assign_hk, "gd::string::assign", tulip::hook::TulipConvention::Thiscall).err();
+    if (res1 != std::nullopt) {
+        log::error("Failed to hook gd::string::assign because of: {}", res1);
+    }
 }
