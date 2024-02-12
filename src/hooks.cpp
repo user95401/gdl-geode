@@ -5,23 +5,83 @@
 
 #include "utils.hpp"
 #include <utf8.h>
+#include <regex>
 
 using namespace geode::prelude;
 
 class $modify(MultilineBitmapFont) {
-    gd::string stringWithMaxWidth(gd::string p0, float p1, float p2) {
-        log::debug("{};{};{}", p0, p1, p2);
+    float m_textScale;
+    std::string m_fontName;
 
-        std::string str = p0;
+    gd::string readColorInfo(gd::string s) {
+        log::debug("color;{}", s);
 
-        std::string s;
-        auto it = str.begin();
-        for (auto i = 0u; i < 10 && it != str.end(); i++) {
+        std::string str = s;
+
+        std::string str2;
+        for (auto it = str.begin(); it != str.end();) {
             auto cp = utf8::next(it, str.end());
-            utf8::append(cp, s);
+            str2 += isascii(cp) ? (char)cp : 'E';
         }
         
-        return s;
+        auto ret = MultilineBitmapFont::readColorInfo(str2);
+        log::debug("color ret;{}", ret);
+
+        str = std::regex_replace(str, std::regex("<c.>"), "");
+        str = std::regex_replace(str, std::regex("</c>"), "");
+        str = std::regex_replace(str, std::regex("<d...>"), "");
+        str = std::regex_replace(str, std::regex("<s...>"), "");
+        str = std::regex_replace(str, std::regex("</s>"), "");
+        str = std::regex_replace(str, std::regex("<i>"), "");
+        str = std::regex_replace(str, std::regex("</i>"), "");
+        
+        return str;
+    }
+    
+    bool initWithFont(char const* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool p6) {
+        log::debug("init;{};{};{};{};{} {};{};{}", p0, p1, p2, p3, p4.x, p4.y, p5, p6);
+        m_fields->m_textScale = p2;
+        m_fields->m_fontName = p0;
+        return MultilineBitmapFont::initWithFont(p0,p1,p2,p3,p4,p5,p6);
+    }
+
+    gd::string stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
+        auto width = scaledW / CCDirector::sharedDirector()->getContentScaleFactor();
+        log::debug("SWMW;{};scale:{};scaledW:{};width:{}", p0, scale, scaledW, width);
+
+        std::string str = p0;
+        if (auto pos = str.find('\n'); pos != std::string::npos) {
+            str = str.substr(0, pos);
+        }
+
+        log::info("SWMW!!;{};{}", m_fields->m_textScale, m_fields->m_fontName);
+        auto lbl = CCLabelBMFont::create("", m_fields->m_fontName.c_str());
+        lbl->setScale(m_fields->m_textScale);
+
+        bool overflown = false;
+        std::string current;
+        for (auto it = str.begin(); it < str.end();) {
+            auto cp = utf8::next(it, str.end());
+            utf8::append(cp, current);
+
+            // auto x = cocos2d::FNTConfigLoadFile("chatFont.fnt");
+            // auto y = x->m_pFontDefDictionary;
+
+            lbl->setString(current.c_str());
+            if (lbl->getScaledContentSize().width > width) {
+                overflown = true;
+                break;
+            }
+        }
+
+        if (overflown) {
+            if (auto pos = current.rfind(' '); pos != std::string::npos) {
+                current.erase(current.begin() + pos, current.end());
+            }
+        }
+
+        current += "\n";
+        return current;
     }
 };
 
@@ -71,7 +131,7 @@ $execute {
     constexpr auto GD_STR_ASSIGN_ADDR = 0x1BB10;
     gd_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + GD_STR_ASSIGN_ADDR);
     auto res2 = Mod::get()->hook((void*)(base::get() + GD_STR_ASSIGN_ADDR), gd_string_assign_hk, "gd::string::assign", tulip::hook::TulipConvention::Thiscall).err();
-    if (res1 != std::nullopt) {
+    if (res2 != std::nullopt) {
         log::error("Failed to hook gd::string::assign because of: {}", res1);
     }
 }

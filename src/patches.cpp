@@ -5,7 +5,7 @@
 using namespace geode::prelude;
 
 $execute {
-    SetConsoleOutputCP(65001);
+    SetConsoleOutputCP(65001); // utf8
     
     static std::vector<std::string> strings;
     
