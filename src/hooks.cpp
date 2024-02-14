@@ -9,40 +9,118 @@
 
 using namespace geode::prelude;
 
+class CCFontSprite : public CCSprite {
+  public:
+	PAD(8);
+	bool m_isInstant;
+	float m_instantValue;
+	float m_delayTime;
+	int m_shakeVal2;
+	float m_shakeVal1;
+    PAD(4);
+    int m_thisTagNumber;
+};
+
 class $modify(MultilineBitmapFont) {
     float m_textScale;
     std::string m_fontName;
+    bool m_doTags;
 
     gd::string readColorInfo(gd::string s) {
         log::debug("color;{}", s);
 
         std::string str = s;
 
-        std::string str2;
-        for (auto it = str.begin(); it != str.end();) {
-            auto cp = utf8::next(it, str.end());
-            str2 += isascii(cp) ? (char)cp : 'E';
+        if (m_fields->m_doTags) {
+            std::string str2;
+            for (auto it = str.begin(); it != str.end();) {
+                auto cp = utf8::next(it, str.end());
+                if (isascii(cp))
+                    str2 += (char)cp;
+                else
+                    str2 += "E";
+            }
+            
+            auto orig = MultilineBitmapFont::readColorInfo(str2);
+            log::debug("color orig;{}", orig);
         }
-        
-        auto ret = MultilineBitmapFont::readColorInfo(str2);
+
+        auto ret = std::regex_replace(str, std::regex("(<c.>)|(<\\/c>)|(<d...>)|(<s...>)|(<\\/s>)|(<i...>)|(<\\/i>)"), "");
         log::debug("color ret;{}", ret);
 
-        str = std::regex_replace(str, std::regex("<c.>"), "");
-        str = std::regex_replace(str, std::regex("</c>"), "");
-        str = std::regex_replace(str, std::regex("<d...>"), "");
-        str = std::regex_replace(str, std::regex("<s...>"), "");
-        str = std::regex_replace(str, std::regex("</s>"), "");
-        str = std::regex_replace(str, std::regex("<i>"), "");
-        str = std::regex_replace(str, std::regex("</i>"), "");
-        
-        return str;
+        // log::debug("{} tags", m_tagsArray->count());
+        // for (auto i = 0u; i < m_tagsArray->count(); i++) {
+        //     auto tag = (TextStyleSection*)(m_tagsArray->objectAtIndex(i));
+        //     log::debug("tag {} ; {} - {}", tag->m_type, tag->m_start, tag->m_end);
+        // }
+
+        return ret;
     }
     
     bool initWithFont(char const* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool p6) {
         log::debug("init;{};{};{};{};{} {};{};{}", p0, p1, p2, p3, p4.x, p4.y, p5, p6);
         m_fields->m_textScale = p2;
         m_fields->m_fontName = p0;
-        return MultilineBitmapFont::initWithFont(p0,p1,p2,p3,p4,p5,p6);
+        m_fields->m_doTags = false;
+
+        if (!MultilineBitmapFont::initWithFont(p0,p1,p2,p3,p4,p5,p6)) 
+            return false;
+            
+        if (!p6) {
+            m_tagsArray = CCArray::create();
+            m_tagsArray->retain();
+
+            m_fields->m_doTags = true;
+            MultilineBitmapFont::readColorInfo(p1);
+
+            log::debug("{} tags", m_tagsArray->count());
+            for (auto i = 0u; i < m_tagsArray->count(); i++) {
+                auto tag = (TextStyleSection*)(m_tagsArray->objectAtIndex(i));
+                log::debug("!!!tag {} ; {} - {}", tag->m_type, tag->m_start, tag->m_end);
+
+                if (tag->m_end == -1 && tag->m_type == 4) {
+                    auto child = (CCFontSprite*)m_lettersArray->objectAtIndex(tag->m_start);
+                    if (child) {
+                        child->m_delayTime = tag->m_delayTime;
+                    }
+                } else {
+                    for (auto i = tag->m_start; i <= tag->m_end; i++) {
+                        auto child = (CCFontSprite*)(m_lettersArray->objectAtIndex(i));
+                        if (!child)
+                            continue;
+
+                        switch (tag->m_type) {
+                            case 1: {
+                                child->setColor(tag->m_col);
+                            } break;
+                            case 2: {
+                                child->m_isInstant = true;
+                                child->m_instantValue = tag->m_instantNum;
+                            } break;
+                            case 3: {
+                                log::debug("SHAKE;{} {}", tag->m_shakeNum1, tag->m_shakeNum2);
+                                int v70 = tag->m_shakeNum2;
+                                float v71 = (float)tag->m_shakeNum1;
+                                child->m_shakeVal1 = v71;
+                                if (v70 > 0)
+                                    v71 = *(float *)&v70; // ?
+                                if (v70 <= 0)
+                                    v71 = 0.0;
+                                child->m_thisTagNumber = i;
+                                if (v70 > 0)
+                                    v71 = 1.0 / v71; // v71 = 1.0 / (float)SLODWORD(v71);
+                                child->m_shakeVal2 = v71;
+                            } break;
+                        }
+                    }
+                }
+            }
+
+            m_tagsArray->release();
+            m_tagsArray = nullptr;
+        }
+
+        return true;
     }
 
     gd::string stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
@@ -54,7 +132,7 @@ class $modify(MultilineBitmapFont) {
             str = str.substr(0, pos);
         }
 
-        log::info("SWMW!!;{};{}", m_fields->m_textScale, m_fields->m_fontName);
+        log::debug("SWMW!!;{};{}", m_fields->m_textScale, m_fields->m_fontName);
         auto lbl = CCLabelBMFont::create("", m_fields->m_fontName.c_str());
         lbl->setScale(m_fields->m_textScale);
 
@@ -80,7 +158,7 @@ class $modify(MultilineBitmapFont) {
             }
         }
 
-        current += "\n";
+        current += " ";
         return current;
     }
 };
