@@ -15,7 +15,7 @@ class CCFontSprite : public CCSprite {
 	bool m_isInstant;
 	float m_instantValue;
 	float m_delayTime;
-	int m_shakeVal2;
+	float m_shakeVal2;
 	float m_shakeVal1;
     PAD(4);
     int m_thisTagNumber;
@@ -80,18 +80,12 @@ class $modify(MultilineBitmapFont) {
                         } break;
                         case 3: {
                             // log::debug("SHAKE;{} {}", tag->m_shakeNum1, tag->m_shakeNum2);
-                            int v70 = tag->m_shakeNum2;
-                            float v71 = (float)tag->m_shakeNum1;
-                            child->m_shakeVal1 = v71;
-                            if (v70 > 0)
-                                v71 = *(float*)&v70; // ?
-                            if (v70 <= 0)
-                                v71 = 0.0;
                             child->m_thisTagNumber = i;
-                            if (v70 > 0)
-                                v71 = 1.0 / v71; // v71 = 1.0 / (float)SLODWORD(v71);
-                            child->m_shakeVal2 = v71;
+                            child->m_shakeVal1 = (float)tag->m_shakeNum1;
+                            child->m_shakeVal2 = tag->m_shakeNum2 <= 0 ? 0.0f : 1.0f / tag->m_shakeNum2;
                         } break;
+                        default:
+                            break;
                         }
                     }
                 }
