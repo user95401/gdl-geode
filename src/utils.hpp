@@ -8,5 +8,5 @@ using namespace geode::prelude;
 
 namespace gdlutils {
     json loadJson(const std::string& name);
-    std::string getQualityString(std::string filename);
+    
 }
