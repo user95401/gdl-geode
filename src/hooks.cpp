@@ -9,10 +9,10 @@
 using namespace geode::prelude;
 
 class $modify(MultilineBitmapFont) {
-    gd::string stringWithMaxWidth(gd::string p0, float p1, float p2) {
-        log::debug("{};{};{}", p0, p1, p2);
+    gd::string stringWithMaxWidth(gd::string str, float width, float scale) {
+        log::debug("{};{};{}", str, width, scale);
 
-        std::string str = p0;
+        std::string str = str;
 
         std::string s;
         auto it = str.begin();
