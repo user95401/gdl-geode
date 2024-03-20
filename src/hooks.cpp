@@ -6,6 +6,7 @@
 #include "utils.hpp"
 #include <utf8.h>
 #include <regex>
+#include <filesystem>
 
 using namespace geode::prelude;
 
@@ -137,18 +138,19 @@ class $modify(MultilineBitmapFont) {
 };
 
 cocos2d::CCBMFontConfiguration* FNTConfigLoadFile_hk(char const* name) {
-    auto newName = Mod::get()->getResourcesDir() / name;
-    if (ghc::filesystem::exists(newName)) {
-        return cocos2d::FNTConfigLoadFile(ghc::filesystem::relative(newName).string().c_str());
+    log::info("FNT {}", name);
+    auto newName = (Mod::get()->getResourcesDir() / name).string();
+    if (std::filesystem::exists(newName)) {
+        return cocos2d::FNTConfigLoadFile(std::filesystem::relative(newName).string().c_str());
     }
     return cocos2d::FNTConfigLoadFile(name);
 }
 
 class $modify(CCTextureCache) {
     cocos2d::CCTexture2D* addImage(const char* name, bool idk) {
-        auto newName = Mod::get()->getResourcesDir() / name;
-        if (ghc::filesystem::exists(newName)) {
-            return CCTextureCache::addImage(ghc::filesystem::relative(newName).string().c_str(), idk);
+        auto newName = (Mod::get()->getResourcesDir() / name).string();
+        if (std::filesystem::exists(newName)) {
+            return CCTextureCache::addImage(std::filesystem::relative(newName).string().c_str(), idk);
         }
         return CCTextureCache::addImage(name, idk);
     }
@@ -183,6 +185,6 @@ $execute {
     gd_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + GD_STR_ASSIGN_ADDR);
     auto res2 = Mod::get()->hook((void*)(base::get() + GD_STR_ASSIGN_ADDR), gd_string_assign_hk, "gd::string::assign", tulip::hook::TulipConvention::Thiscall).err();
     if (res2 != std::nullopt) {
-        log::error("Failed to hook gd::string::assign because of: {}", res1);
+        log::error("Failed to hook gd::string::assign because of: {}", res2);
     }
 }

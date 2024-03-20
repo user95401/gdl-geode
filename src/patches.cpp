@@ -31,7 +31,7 @@ void patchStrings() {
 
         for (const auto addr : patchFile[pair.key()]) {
             const char* str = strings[strings.size() - 1].c_str();
-            Mod::get()->patch((void*)(base::get() + addr), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4));
+            Mod::get()->patch((void*)(base::get() + (uintptr_t)addr), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4));
         }
     }
 #elif defined(GEODE_IS_ANDROID)

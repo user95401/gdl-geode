@@ -55,3 +55,6 @@
 
 CMakePresets.json
 mergemods.py
+
+/*.sh
+/build_linux
