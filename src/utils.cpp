@@ -23,3 +23,19 @@ json gdlutils::loadJson(const std::string& name) {
         return nullptr;
     }
 }
+
+std::string gdlutils::pathWithQuality(const std::filesystem::path& path) {
+    auto quality = CCDirector::get()->getLoadedTextureQuality();
+
+    auto str = path.parent_path() / path.stem();
+    auto ext = path.extension();
+
+    switch (quality) {
+        case TextureQuality::kTextureQualityMedium:
+            return str.string() + "-hd" + ext.string();
+        case TextureQuality::kTextureQualityHigh:
+            return str.string() + "-uhd" + ext.string();
+        default:
+            return path.string();
+    }
+}

@@ -17,6 +17,7 @@ using namespace geode::prelude;
 class $modify(MultilineBitmapFont) {
     float m_textScale;
     std::string m_fontName;
+    float m_maxWidth;
 
     gd::string readColorInfo(gd::string s) {
         std::string str = s;
@@ -33,6 +34,8 @@ class $modify(MultilineBitmapFont) {
     bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool colorsDisabled) {
         m_fields->m_textScale = p2;
         m_fields->m_fontName = p0;
+        m_fields->m_maxWidth = p3;
+        log::debug("MBF;{};{};{};{}", m_fields->m_textScale, m_fields->m_fontName, (std::string)p1, p3);
 
         auto notags = std::regex_replace((std::string)p1, std::regex("(<c.>)|(<\\/c>)|(<d...>)|(<s...>)|(<\\/s>)|(<i...>)|(<\\/i>)"), "");
         if (!MultilineBitmapFont::initWithFont(p0, notags, p2, p3, p4, p5, true))
@@ -86,7 +89,7 @@ class $modify(MultilineBitmapFont) {
     }
 
     gd::string stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
-        auto width = scaledW / CCDirector::sharedDirector()->getContentScaleFactor();
+        auto width = m_fields->m_maxWidth;
 
         std::string str = p0;
         if (auto pos = str.find('\n'); pos != std::string::npos) {
@@ -125,10 +128,27 @@ class $modify(MultilineBitmapFont) {
 
 class $modify(CCTextureCache) {
     cocos2d::CCTexture2D* addImage(const char* name, bool idk) {
+//         auto newName = (Mod::get()->getResourcesDir() / name).string();
+//         log::debug("addImage;{};{}", name, newName);
+//         if (std::filesystem::exists(newName)) {
+// #ifdef GEODE_IS_WINDOWS
+//             return CCTextureCache::addImage(std::filesystem::relative(newName).string().c_str(), idk);
+// #else
+//             log::debug("1111; {}", gdlutils::pathWithQuality(newName));
+//             return CCTextureCache::addImage(gdlutils::pathWithQuality(newName).c_str(), idk);
+// #endif
+//         }
+//         return CCTextureCache::addImage(name, idk);
+
         auto newName = (Mod::get()->getResourcesDir() / name).string();
-        log::debug("addImage;{};{}", name, newName);
+        // log::debug("addImage;{};{}", name, newName);
         if (std::filesystem::exists(newName)) {
+#ifdef GEODE_IS_WINDOWS
+            return CCTextureCache::addImage(std::filesystem::relative(newName).string().c_str(), idk);
+#else
+            // log::debug("1111; {}", gdlutils::pathWithQuality(newName));
             return CCTextureCache::addImage(newName.c_str(), idk);
+#endif
         }
         return CCTextureCache::addImage(name, idk);
     }
@@ -136,8 +156,13 @@ class $modify(CCTextureCache) {
 
 cocos2d::CCBMFontConfiguration* FNTConfigLoadFile_hk(char const* name) {
     auto newName = (Mod::get()->getResourcesDir() / name).string();
+    // log::debug("FONT;{};{}", name, newName);
     if (std::filesystem::exists(newName)) {
-        return cocos2d::FNTConfigLoadFile(newName.c_str());
+#ifdef GEODE_IS_WINDOWS
+        return cocos2d::FNTConfigLoadFile(std::filesystem::relative(newName).string().c_str());
+#else
+        return cocos2d::FNTConfigLoadFile(gdlutils::pathWithQuality(newName).c_str());
+#endif
     }
     return cocos2d::FNTConfigLoadFile(name);
 }
@@ -168,10 +193,7 @@ void gd_string_append_hk(void* self, char* src, size_t len) {
 
 	gd_string_append_o(self, src, strlen(src));
 }
-<<<<<<< HEAD
 
-=======
->>>>>>> ebc4e5e001268dd4989f51242466353655fc4890
 #endif
 
 $execute {
