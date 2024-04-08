@@ -1,10 +1,7 @@
 #include "utils.hpp"
-
 #include <Geode/Geode.hpp>
 
 using namespace geode::prelude;
-
-#define CURRENT_LOC "ru"
 
 json gdlutils::loadJson(const std::string& name) {
     std::ifstream translationFileStream(name);

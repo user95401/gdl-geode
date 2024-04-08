@@ -40,8 +40,7 @@ class $modify(MultilineBitmapFont) {
         return orig;
     }
 
-    bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool p6) {
-        // log::debug("init;{};{};{};{};{} {};{};{}", p0, p1, p2, p3, p4.x, p4.y, p5, p6);
+    bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool colorsDisabled) {
         m_fields->m_textScale = p2;
         m_fields->m_fontName = p0;
 
@@ -49,16 +48,14 @@ class $modify(MultilineBitmapFont) {
         if (!MultilineBitmapFont::initWithFont(p0, notags, p2, p3, p4, p5, true))
             return false;
 
-        if (!p6) {
+        if (!colorsDisabled) {
             m_tagsArray = CCArray::create();
             m_tagsArray->retain();
 
             MultilineBitmapFont::readColorInfo(p1);
 
-            // log::debug("{} tags", m_tagsArray->count());
             for (auto i = 0u; i < m_tagsArray->count(); i++) {
                 auto tag = (TextStyleSection*)(m_tagsArray->objectAtIndex(i));
-                // log::debug("!!!tag {} ; {} - {}", tag->m_type, tag->m_start, tag->m_end);
 
                 if (tag->m_end == -1 && tag->m_type == 4) {
                     auto child = (CCFontSprite*)m_lettersArray->objectAtIndex(tag->m_start);
@@ -80,7 +77,6 @@ class $modify(MultilineBitmapFont) {
                             child->m_instantValue = tag->m_instantNum;
                         } break;
                         case 3: {
-                            // log::debug("SHAKE;{} {}", tag->m_shakeNum1, tag->m_shakeNum2);
                             child->m_thisTagNumber = i;
                             child->m_shakeVal1 = (float)tag->m_shakeNum1;
                             child->m_shakeVal2 = tag->m_shakeNum2 <= 0 ? 0.0f : 1.0f / tag->m_shakeNum2;
@@ -138,7 +134,6 @@ class $modify(MultilineBitmapFont) {
 };
 
 cocos2d::CCBMFontConfiguration* FNTConfigLoadFile_hk(char const* name) {
-    log::info("FNT {}", name);
     auto newName = (Mod::get()->getResourcesDir() / name).string();
     if (std::filesystem::exists(newName)) {
         return cocos2d::FNTConfigLoadFile(std::filesystem::relative(newName).string().c_str());
@@ -182,7 +177,7 @@ $execute {
     }
     
     constexpr auto GD_STR_ASSIGN_ADDR = 0x1BB10;
-    gd_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + GD_STR_ASSIGN_ADDR);
+    gd_string_assign_o = reinterpret_cast<void (__thiscall*)(void*, char*, size_t)>(base::get() + GD_STR_ASSIGN_ADDR);
     auto res2 = Mod::get()->hook((void*)(base::get() + GD_STR_ASSIGN_ADDR), gd_string_assign_hk, "gd::string::assign", tulip::hook::TulipConvention::Thiscall).err();
     if (res2 != std::nullopt) {
         log::error("Failed to hook gd::string::assign because of: {}", res2);

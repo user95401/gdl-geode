@@ -1,5 +1,4 @@
 #include <Geode/Geode.hpp>
-
 #include "Geode/modify/CCKeyboardDispatcher.hpp"
 #include "utils.hpp"
 
@@ -9,8 +8,12 @@ void patchStrings() {
     static std::vector<std::string> strings;
 
     for (auto p : Mod::get()->getPatches()) {
-        if (p->isEnabled())
-            p->disable();
+        if (p->isEnabled()) {
+            auto res = p->disable().err();
+            if (res != std::nullopt) {
+                log::warn("Failed to disable patch at {}, error: {}", p->getAddress() - base::get(), res);
+            }
+        }
     }
 
     // locationsFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_ru_locations.json").string());
@@ -31,7 +34,10 @@ void patchStrings() {
 
         for (const auto addr : patchFile[pair.key()]) {
             const char* str = strings[strings.size() - 1].c_str();
-            Mod::get()->patch((void*)(base::get() + (uintptr_t)addr), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4));
+            auto res = Mod::get()->patch((void*)(base::get() + (uintptr_t)addr), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4)).err();
+            if (res != std::nullopt) {
+                log::warn("Failed to patch string at 0x{:X}, error: {}", (uintptr_t)addr, res);
+            }
         }
     }
 #elif defined(GEODE_IS_ANDROID)
