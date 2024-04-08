@@ -125,17 +125,18 @@ class $modify(MultilineBitmapFont) {
     }
 };
 
-#ifdef GEODE_IS_WINDOWS // Не работает на андроиде :( 
+// #ifdef GEODE_IS_WINDOWS // Не работает на андроиде :( 
 class $modify(CCTextureCache) {
     cocos2d::CCTexture2D* addImage(const char* name, bool idk) {
         auto newName = (Mod::get()->getResourcesDir() / name).string();
+        log::debug("addImage;{};{}", name, newName);
         if (std::filesystem::exists(newName)) {
             return CCTextureCache::addImage(std::filesystem::relative(newName).string().c_str(), idk);
         }
         return CCTextureCache::addImage(name, idk);
     }
 };
-#endif
+// #endif
 
 cocos2d::CCBMFontConfiguration* FNTConfigLoadFile_hk(char const* name) {
     auto newName = (Mod::get()->getResourcesDir() / name).string();
@@ -146,6 +147,7 @@ cocos2d::CCBMFontConfiguration* FNTConfigLoadFile_hk(char const* name) {
 }
 
 #ifdef GEODE_IS_WINDOWS
+
 void (__thiscall* gd_string_assign_o)(void* self, char* src, size_t len);
 void gd_string_assign_hk(void* self, char* src, size_t len) {
 /*     
@@ -163,7 +165,6 @@ void gd_string_assign_hk(void* self, char* src, size_t len) {
 */
 	gd_string_assign_o(self, src, strlen(src));
 }
-#endif
 
 void (__thiscall* gd_string_append_o)(void* self, char* src, size_t len);
 void gd_string_append_hk(void* self, char* src, size_t len) {
@@ -172,6 +173,7 @@ void gd_string_append_hk(void* self, char* src, size_t len) {
 	gd_string_append_o(self, src, strlen(src));
 }
 
+#endif
 
 $execute {
 #if defined(GEODE_IS_WINDOWS)

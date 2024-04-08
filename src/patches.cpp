@@ -1,11 +1,13 @@
 #include <Geode/Geode.hpp>
 #include "utils.hpp"
+
 #if defined(GEODE_IS_WINDOWS)
 #include <geode.custom-keybinds/include/Keybinds.hpp>
+
+using namespace keybinds;
 #endif
 
 using namespace geode::prelude;
-using namespace keybinds;
 
 void patchStrings() {
     static std::vector<std::string> strings;
@@ -20,7 +22,7 @@ void patchStrings() {
     }
 
     // locationsFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_ru_locations.json").string());
-    auto langFile = gdlutils::loadJson((ghc::filesystem::current_path() / "ru_lang.json").string());
+    auto langFile = gdlutils::loadJson((std::filesystem::current_path() / "ru_lang.json").string());
     // auto langFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_lang.json").string());
 
     strings.clear();
