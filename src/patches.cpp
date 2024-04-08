@@ -5,7 +5,9 @@
 #endif
 
 using namespace geode::prelude;
+#if defined(GEODE_IS_WINDOWS)
 using namespace keybinds;
+#endif
 
 void patchStrings() {
     static std::vector<std::string> strings;

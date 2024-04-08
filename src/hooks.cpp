@@ -2,7 +2,6 @@
 #include "Geode/modify/MultilineBitmapFont.hpp"
 #include "Geode/modify/CCLabelBMFont.hpp"
 #include "Geode/modify/CCTextureCache.hpp"
-#include <geode.custom-keybinds/include/Keybinds.hpp>
 
 #include "utils.hpp"
 #include <utf8.h>
@@ -14,7 +13,6 @@
 #endif
 
 using namespace geode::prelude;
-using namespace keybinds;
 
 class $modify(MultilineBitmapFont) {
     float m_textScale;
@@ -125,22 +123,21 @@ class $modify(MultilineBitmapFont) {
     }
 };
 
-#ifdef GEODE_IS_WINDOWS // Не работает на андроиде :( 
 class $modify(CCTextureCache) {
     cocos2d::CCTexture2D* addImage(const char* name, bool idk) {
+        log::info("addImage: {}, {}", name, idk);
         auto newName = (Mod::get()->getResourcesDir() / name).string();
         if (std::filesystem::exists(newName)) {
-            return CCTextureCache::addImage(std::filesystem::relative(newName).string().c_str(), idk);
+            return CCTextureCache::addImage(newName.c_str(), idk);
         }
         return CCTextureCache::addImage(name, idk);
     }
 };
-#endif
 
 cocos2d::CCBMFontConfiguration* FNTConfigLoadFile_hk(char const* name) {
     auto newName = (Mod::get()->getResourcesDir() / name).string();
     if (std::filesystem::exists(newName)) {
-        return cocos2d::FNTConfigLoadFile(std::filesystem::relative(newName).string().c_str());
+        return cocos2d::FNTConfigLoadFile(newName.c_str());
     }
     return cocos2d::FNTConfigLoadFile(name);
 }
@@ -163,7 +160,6 @@ void gd_string_assign_hk(void* self, char* src, size_t len) {
 */
 	gd_string_assign_o(self, src, strlen(src));
 }
-#endif
 
 void (__thiscall* gd_string_append_o)(void* self, char* src, size_t len);
 void gd_string_append_hk(void* self, char* src, size_t len) {
@@ -171,19 +167,19 @@ void gd_string_append_hk(void* self, char* src, size_t len) {
 
 	gd_string_append_o(self, src, strlen(src));
 }
-
+#endif
 
 $execute {
 #if defined(GEODE_IS_WINDOWS)
     auto addr = GetProcAddress(GetModuleHandleA("libcocos2d.dll"), "?FNTConfigLoadFile@cocos2d@@YAPAVCCBMFontConfiguration@1@PBD@Z");
     auto res1 = Mod::get()->hook((void*)addr, FNTConfigLoadFile_hk, "cocos2d::FNTConfigLoadFile", tulip::hook::TulipConvention::Cdecl).err();
 #elif defined(GEODE_IS_ANDROID)
-    // auto addr = dlsym(dlopen("libcocos2dcpp.so", RTLD_LAZY), "_ZN7cocos2d17FNTConfigLoadFileEPKc");
-    // auto res1 = Mod::get()->hook((void*)addr, FNTConfigLoadFile_hk, "cocos2d::FNTConfigLoadFile", tulip::hook::TulipConvention::Default).err();
+    auto addr = dlsym(dlopen("libcocos2dcpp.so", RTLD_LAZY), "_ZN7cocos2d17FNTConfigLoadFileEPKc");
+    auto res1 = Mod::get()->hook((void*)addr, FNTConfigLoadFile_hk, "cocos2d::FNTConfigLoadFile", tulip::hook::TulipConvention::Default).err();
 #endif
-    // if (res1 != std::nullopt) {
-    //     log::error("Failed to hook cocos2d::FNTConfigLoadFile because of: {}", res1);
-    // }
+    if (res1 != std::nullopt) {
+        log::error("Failed to hook cocos2d::FNTConfigLoadFile because of: {}", res1);
+    }
 
 #ifdef GEODE_IS_WINDOWS
     constexpr auto GD_STR_ASSIGN_ADDR = 0x1BB10;
