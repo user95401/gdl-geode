@@ -9,9 +9,10 @@
 	"early-load": true,
 	"resources": {
 		"files": [
-			"resources/*.json",
+			"resources/patches/*",
 			"resources/loc/*",
-			"resources/fonts/*"
+			"resources/fonts/*",
+			"resources/sprites/*"
 		]
 	},
 	"dependencies": [
@@ -23,5 +24,15 @@
 			],
 			"version": ">=1.5.0"
 		}
-	]
+	],
+	"repository": "https://github.com/gdlocalisation",
+	"issues": {
+		"info": "You can report issues and ask questions in our [Discord server](https://discord.gg/CScsGU3N6M)",
+		"url": "https://discord.gg/CScsGU3N6M"
+	},
+	"links": {
+		"community": "https://discord.gg/CScsGU3N6M",
+		"homepage": "https://www.gdlocalisation.uk/",
+		"source": "https://github.com/gdlocalisation"
+	}
 }

@@ -25,7 +25,7 @@ void patchStrings() {
     strings.reserve(langFile.size());
 
 #ifdef GEODE_IS_WINDOWS
-    auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "windows_patches.json").string());
+    auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "patches" / "win.json").string());
 
     for (const auto& pair : langFile.items()) {
         if (!patchFile.contains(pair.key()))
