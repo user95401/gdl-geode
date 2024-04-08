@@ -1,5 +1,4 @@
 #include <Geode/Geode.hpp>
-
 #include <geode.custom-keybinds/include/Keybinds.hpp>
 #include "utils.hpp"
 
@@ -79,8 +78,17 @@ $execute {
     });
 
     new EventListener([=](InvokeBindEvent* event) {
-    	patchStrings();
-        Notification::create("GDL: Updated strings", NotificationIcon::Success)->show();
+        static bool wasPressed = false;
+
+        if (event->isDown()) {
+            if (!wasPressed) {
+                wasPressed = true;
+                patchStrings();
+                Notification::create("GDL: Updated strings", NotificationIcon::Success)->show();
+            }
+        } else {
+            wasPressed = false;
+        }
         
 	    return ListenerResult::Propagate;
     }, InvokeBindFilter(nullptr, "reload"_spr));
