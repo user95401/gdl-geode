@@ -183,6 +183,6 @@ $execute {
     gd_string_append_o = reinterpret_cast<void (__thiscall*)(void*, char*, size_t)>(base::get() + GD_STR_APPEND_ADDR);
     auto res3 = Mod::get()->hook((void*)(base::get() + GD_STR_APPEND_ADDR), gd_string_append_hk, "gd::string::append", tulip::hook::TulipConvention::Thiscall).err();
     if (res3 != std::nullopt) {
-        log::error("Failed to hook gd::string::append because of: {}", res2);
+        log::error("Failed to hook gd::string::append because of: {}", res3);
     }
 }
