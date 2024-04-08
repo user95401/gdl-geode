@@ -5895,7 +5895,9 @@
     "- Tap on the screen to create markers.\n- Tap on the stop button to finish.": [
         448174
     ],
-    "вЂўRecordingвЂў": [],
+    "•Recording•": [
+        448357
+    ],
     "<cr>Delete</c> the current <cl>guidelines</c>?": [
         451307
     ],
@@ -8228,13 +8230,6 @@
         1878559,
         3918517
     ],
-    "invalid hash bucket count": [
-        1883082
-    ],
-    "vector<bool> too long": [
-        1887313,
-        1887521
-    ],
     "Select Custom Color:": [
         1924427
     ],
@@ -9720,9 +9715,6 @@
     "Top Lists": [
         2318951
     ],
-    "MODE: %i": [
-        2318866
-    ],
     "Lists": [
         2318901
     ],
@@ -9776,9 +9768,6 @@
         2320097,
         2468201
     ],
-    "1 MODE: %i": [
-        2321110
-    ],
     "Levels on this list have been rated and featured by RobTop. The extra visual around the difficulty face indicates how much he likes a specific level. In order of increasing quality:\n<cy>Featured</c>, <co>Epic</c>, <cp>Legendary</c>, and <cj>Mythic</c>.": [
         2319097
     ],
@@ -9790,9 +9779,6 @@
     ],
     "Remove all levels from favorites?\n<cg>Search and folder filters apply.</c>\n<cy>Levels will not be deleted.</c>": [
         2321699
-    ],
-    "2 MODE: %i": [
-        2321382
     ],
     "Delete all saved online levels?\n<cg>Search and folder filters apply.</c>\n<cl>Favorite levels will not be deleted.</c>\n<cy>Stats and progress will be saved.</c>": [
         2321502
@@ -10843,7 +10829,9 @@
     "I Accept": [
         2639098
     ],
-    "Important notification - Terms of use. RobTop Games provides a library of music and sound effects for creative use within Geometry Dash. You are free to use these assets for creating and sharing levels within the game. However, redistributing, selling, manipulating, or using these assets outside the game is prohibited. If you share game-related content on social media or upload videos featuring custom music, please give credit to the respective artist. Regarding music from Newgrounds.com: Some custom songs are available via a third party website, Newgrounds.com. These songs, created by artists using Newgrounds.com, are under Creative Commons licensing terms accessible on Newgrounds.com. By downloading a song from Newgrounds, you accept these terms and any others designated by Newgrounds. RobTop Games is not the provider of songs from Newgrounds.com, nor a party to the licensing agreements, and does not store any audio files downloaded from Newgrounds.com. You are responsible for the content you create using ": [],
+    "Important notification - Terms of use. RobTop Games provides a library of music and sound effects for creative use within Geometry Dash. You are free to use these assets for creating and sharing levels within the game. However, redistributing, selling, manipulating, or using these assets outside the game is prohibited. If you share game-related content on social media or upload videos featuring custom music, please give credit to the respective artist. Regarding music from Newgrounds.com: Some custom songs are available via a third party website, Newgrounds.com. These songs, created by artists using Newgrounds.com, are under Creative Commons licensing terms accessible on Newgrounds.com. By downloading a song from Newgrounds, you accept these terms and any others designated by Newgrounds. RobTop Games is not the provider of songs from Newgrounds.com, nor a party to the licensing agreements, and does not store any audio files downloaded from Newgrounds.com. You are responsible for the content you create using all music and sound effects provided. Ensure your creations adhere to the game's community guidelines and do not infringe on any rights. The availability of music and sound effects in Geometry Dash is subject to change. RobTop Games may add or remove content from both the custom library and the Newgrounds.com selection without prior notice. We do not guarantee the continuous availability or suitability of any music or sound effects in the game. We may update these terms at any time, with your continued use of Geometry Dash signifying acceptance of any changes. By clicking the 'I Accept' button, you acknowledge and approve of the above-stated terms of use.": [
+        2639056
+    ],
     "Terms of Use": [
         2639072
     ],
@@ -11617,13 +11605,6 @@
     ],
     "SFX: ": [
         3039178
-    ],
-    "invalid bitset<N> position": [
-        3029263
-    ],
-    "upd_profile": [
-        3070794,
-        3070832
     ],
     "Please wait %i seconds before posting a new update!": [
         3082728
@@ -13078,8 +13059,9 @@
     "My thunder comes before my lightning": [
         3211243
     ],
-    "Legend tells of a level s": [],
-    "o hard no one can beat it": [],
+    "Legend tells of a level so hard no one can beat it": [
+        3211335
+    ],
     "My rain dries up all the land it touches": [
         3211277
     ],
@@ -15081,9 +15063,6 @@
     ],
     "Activates other triggers simultaneously regardless of X position. These triggers need to use <cg>Group ID</c> and have <cy>Spawn Trigger</c> enabled.\n<cl>Preview Disable</c> disables activation while not playtesting in editor.\n<cp>Spawn Ordered</c> spawns the triggers in order from left to right.\nUse remapping (page 2) to copy a Spawn setup to another group.": [
         3531823
-    ],
-    "invalid vector<T> subscript": [
-        3536308
     ],
     "Smooth\nVelocity": [
         3537912
