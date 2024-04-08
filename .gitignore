@@ -58,4 +58,6 @@ mergemods.py
 
 /*.sh
 /build_linux
+/build-android32
+/build-android64
 .VSCodeCounter

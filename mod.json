@@ -1,7 +1,10 @@
 {
 	"geode": "2.0.0",
 	"version": "v2.0.0",
-	"gd": "2.204",
+	"gd": {
+		"android": "2.205",
+		"win": "2.204"
+	},
 	"id": "gdlteam.gdl",
 	"name": "GDL",
 	"developer": "GDL Team",

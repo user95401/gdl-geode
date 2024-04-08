@@ -24,7 +24,7 @@ void patchStrings() {
     strings.clear();
     strings.reserve(langFile.size());
 
-#ifdef GEODE_IS_WINDOWS
+#if defined(GEODE_IS_WINDOWS)
     auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "windows_patches.json").string());
 
     for (const auto& pair : langFile.items()) {
@@ -65,9 +65,8 @@ void patchStrings() {
 }
 
 $execute {
+#if defined(GEODE_IS_WINDOWS)
     SetConsoleOutputCP(65001); // utf8
-
-    patchStrings();
 
     BindManager::get()->registerBindable({
         "reload"_spr,
@@ -92,4 +91,7 @@ $execute {
         
 	    return ListenerResult::Propagate;
     }, InvokeBindFilter(nullptr, "reload"_spr));
+#endif
+
+    patchStrings();
 }
