@@ -1,9 +1,10 @@
 #include <Geode/Geode.hpp>
 
-#include "Geode/modify/CCKeyboardDispatcher.hpp"
+#include <geode.custom-keybinds/include/Keybinds.hpp>
 #include "utils.hpp"
 
 using namespace geode::prelude;
+using namespace keybinds;
 
 void patchStrings() {
     static std::vector<std::string> strings;
@@ -61,16 +62,19 @@ $execute {
     SetConsoleOutputCP(65001); // utf8
 
     patchStrings();
+
+    BindManager::get()->registerBindable({
+        "reload"_spr,
+        "Reload lang file",
+        "",
+        { Keybind::create(KEY_P, Modifier::None) },
+        "GDL/Debug"
+    });
+
+    new EventListener([=](InvokeBindEvent* event) {
+    	patchStrings();
+        Notification::create("GDL: Updated strings", NotificationIcon::Success)->show();
+        
+	    return ListenerResult::Propagate;
+    }, InvokeBindFilter(nullptr, "reload"_spr));
 }
-
-class $modify(CCKeyboardDispatcher) {
-    bool dispatchKeyboardMSG(enumKeyCodes key, bool isKeyDown, bool isKeyRepeat) {
-        if (isKeyDown && key == enumKeyCodes::KEY_P) {
-            patchStrings();
-            Notification::create("GDL: Updated strings", NotificationIcon::Success)->show();
-            return true;
-        }
-
-        return CCKeyboardDispatcher::dispatchKeyboardMSG(key, isKeyDown, isKeyRepeat);
-    }
-};

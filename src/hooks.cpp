@@ -2,6 +2,7 @@
 #include "Geode/modify/MultilineBitmapFont.hpp"
 #include "Geode/modify/CCLabelBMFont.hpp"
 #include "Geode/modify/CCTextureCache.hpp"
+#include <geode.custom-keybinds/include/Keybinds.hpp>
 
 #include "utils.hpp"
 #include <utf8.h>
@@ -9,18 +10,7 @@
 #include <filesystem>
 
 using namespace geode::prelude;
-
-class CCFontSprite : public CCSprite {
-  public:
-	PAD(8);
-	bool m_isInstant;
-	float m_instantValue;
-	float m_delayTime;
-	float m_shakeVal2;
-	float m_shakeVal1;
-    PAD(4);
-    int m_thisTagNumber;
-};
+using namespace keybinds;
 
 class $modify(MultilineBitmapFont) {
     float m_textScale;
@@ -32,12 +22,10 @@ class $modify(MultilineBitmapFont) {
         std::string str2;
         for (auto it = str.begin(); it != str.end();) {
             auto cp = utf8::next(it, str.end());
-            str2 += isascii(cp) ? (char)cp : 'W';
+            str2 += __isascii(cp) ? (char)cp : 'W';
         }
 
-        auto orig = MultilineBitmapFont::readColorInfo(str2);
-
-        return orig;
+        return MultilineBitmapFont::readColorInfo(str2);
     }
 
     bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool p6) {

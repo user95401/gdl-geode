@@ -14,5 +14,12 @@
 			"resources/fonts/*"
 		]
 	},
-	"settings": {}
+	"dependencies": [
+		{
+			"id": "geode.custom-keybinds",
+			"importance": "recommended",
+			"platforms": ["windows"],
+			"version": ">=1.5.0"
+		}
+	]
 }

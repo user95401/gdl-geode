@@ -8,5 +8,4 @@ using namespace geode::prelude;
 
 namespace gdlutils {
     json loadJson(const std::string& name);
-    
 }
