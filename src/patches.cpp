@@ -1,6 +1,8 @@
 #include <Geode/Geode.hpp>
-#include <geode.custom-keybinds/include/Keybinds.hpp>
 #include "utils.hpp"
+#if defined(GEODE_IS_WINDOWS)
+#include <geode.custom-keybinds/include/Keybinds.hpp>
+#endif
 
 using namespace geode::prelude;
 using namespace keybinds;
@@ -23,9 +25,9 @@ void patchStrings() {
 
     strings.clear();
     strings.reserve(langFile.size());
-
+    
 #if defined(GEODE_IS_WINDOWS)
-    auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "windows_patches.json").string());
+    auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "win-2.204.json").string());
 
     for (const auto& pair : langFile.items()) {
         if (!patchFile.contains(pair.key()))
