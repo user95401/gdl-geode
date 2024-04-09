@@ -21,9 +21,8 @@ void patchStrings() {
         }
     }
 
-    // locationsFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_ru_locations.json").string());
-    auto langFile = gdlutils::loadJson((std::filesystem::current_path() / "ru_lang.json").string());
-    // auto langFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_lang.json").string());
+    auto locationsFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_locations.json").string());
+    auto langFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "ru_lang.json").string());
 
     strings.clear();
     strings.reserve(langFile.size());
