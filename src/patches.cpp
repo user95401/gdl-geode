@@ -64,7 +64,7 @@ void patchStrings() {
             Mod::get()->patch((void*)(base::get() + addr.get<uintptr_t>()), ByteVector({0x00, 0xBF}));
         }
     }
-#elif defined(GEODE_IS_ANDROID32)
+#elif defined(GEODE_IS_ANDROID64)
     auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "android64-2.205.json").string());
 
     // coming soon
