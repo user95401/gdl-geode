@@ -44,26 +44,26 @@ void patchStrings() {
             }
         }
     }
-#elif defined(GEODE_IS_ANDROID)
-    // auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "gdl_patches-android.json").string());
+#elif defined(GEODE_IS_ANDROID32)
+    auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "android32-2.205.json").string());
 
-    // for (const auto& pair : langFile.items()) {
-    //     if (!patchFile.contains(pair.key()))
-    //         continue;
+    for (const auto& pair : langFile.items()) {
+        if (!patchFile.contains(pair.key()))
+            continue;
 
-    //     strings.push_back(pair.value());
+        strings.push_back(pair.value());
 
-    //     const char* str = strings[strings.size() - 1].c_str();
-    //     auto array = patchFile[pair.key()].get<nlohmann::json::array_t>();
+        const char* str = strings[strings.size() - 1].c_str();
+        auto array = patchFile[pair.key()].get<nlohmann::json::array_t>();
 
-    //     for(const auto& addr : array[0].get<nlohmann::json::array_t>()) {
-    //         Mod::get()->patch((void*)(base::get() + addr.get<uintptr_t>()), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4));
-    //     }
+        for(const auto& addr : array[0].get<nlohmann::json::array_t>()) {
+            Mod::get()->patch((void*)(base::get() + addr.get<uintptr_t>()), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4));
+        }
 
-    //     for(const auto& addr : array[1].get<nlohmann::json::array_t>()) {
-    //         Mod::get()->patch((void*)(base::get() + addr.get<uintptr_t>()), ByteVector({0x00, 0xBF}));
-    //     }
-    // }
+        for(const auto& addr : array[1].get<nlohmann::json::array_t>()) {
+            Mod::get()->patch((void*)(base::get() + addr.get<uintptr_t>()), ByteVector({0x00, 0xBF}));
+        }
+    }
 #endif
 }
 
