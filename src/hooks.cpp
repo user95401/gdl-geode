@@ -15,9 +15,11 @@
 using namespace geode::prelude;
 
 class $modify(MultilineBitmapFont) {
-    float m_textScale;
-    std::string m_fontName;
-    float m_maxWidth;
+    struct Fields {
+        float m_textScale;
+        std::string m_fontName;
+        float m_maxWidth;
+    };
 
     gd::string readColorInfo(gd::string s) {
         std::string str = s;
@@ -35,7 +37,7 @@ class $modify(MultilineBitmapFont) {
         m_fields->m_textScale = p2;
         m_fields->m_fontName = p0;
         m_fields->m_maxWidth = p3;
-        log::debug("MBF;{};{};{};{}", m_fields->m_textScale, m_fields->m_fontName, (std::string)p1, p3);
+        // log::debug("MBF;{};{};{};{}", m_fields->m_textScale, m_fields->m_fontName, (std::string)p1, p3);
 
         auto notags = std::regex_replace((std::string)p1, std::regex("(<c.>)|(<\\/c>)|(<d...>)|(<s...>)|(<\\/s>)|(<i...>)|(<\\/i>)"), "");
         if (!MultilineBitmapFont::initWithFont(p0, notags, p2, p3, p4, p5, true))
@@ -128,25 +130,12 @@ class $modify(MultilineBitmapFont) {
 
 class $modify(CCTextureCache) {
     cocos2d::CCTexture2D* addImage(const char* name, bool idk) {
-//         auto newName = (Mod::get()->getResourcesDir() / name).string();
-//         log::debug("addImage;{};{}", name, newName);
-//         if (std::filesystem::exists(newName)) {
-// #ifdef GEODE_IS_WINDOWS
-//             return CCTextureCache::addImage(std::filesystem::relative(newName).string().c_str(), idk);
-// #else
-//             log::debug("1111; {}", gdlutils::pathWithQuality(newName));
-//             return CCTextureCache::addImage(gdlutils::pathWithQuality(newName).c_str(), idk);
-// #endif
-//         }
-//         return CCTextureCache::addImage(name, idk);
-
         auto newName = (Mod::get()->getResourcesDir() / name).string();
-        // log::debug("addImage;{};{}", name, newName);
+
         if (std::filesystem::exists(newName)) {
 #ifdef GEODE_IS_WINDOWS
             return CCTextureCache::addImage(std::filesystem::relative(newName).string().c_str(), idk);
 #else
-            // log::debug("1111; {}", gdlutils::pathWithQuality(newName));
             return CCTextureCache::addImage(newName.c_str(), idk);
 #endif
         }
@@ -154,18 +143,21 @@ class $modify(CCTextureCache) {
     }
 };
 
-cocos2d::CCBMFontConfiguration* FNTConfigLoadFile_hk(char const* name) {
-    auto newName = (Mod::get()->getResourcesDir() / name).string();
-    // log::debug("FONT;{};{}", name, newName);
-    if (std::filesystem::exists(newName)) {
+class $modify(CCLabelBMFont) {
+    bool initWithString(char const* str, char const* font, float a3, cocos2d::CCTextAlignment a4, cocos2d::CCPoint a5) {
+        auto newName = Mod::get()->getResourcesDir() / font;
+
+        if (std::filesystem::exists(newName)) {
 #ifdef GEODE_IS_WINDOWS
-        return cocos2d::FNTConfigLoadFile(std::filesystem::relative(newName).string().c_str());
-#else
-        return cocos2d::FNTConfigLoadFile(gdlutils::pathWithQuality(newName).c_str());
+            return CCLabelBMFont::initWithString(str, std::filesystem::relative(newName).string().c_str(), a3, a4, a5);
+#elif
+            return CCLabelBMFont::initWithString(str, gdlutils::pathWithQuality(newName).c_str(), a3, a4, a5);
 #endif
+        }
+
+        return CCLabelBMFont::initWithString(str, font, a3, a4, a5);
     }
-    return cocos2d::FNTConfigLoadFile(name);
-}
+};
 
 #ifdef GEODE_IS_WINDOWS
 
@@ -173,54 +165,43 @@ void (__thiscall* gd_string_assign_o)(void* self, char* src, size_t len);
 void gd_string_assign_hk(void* self, char* src, size_t len) {
 /*     
         Зачем нужен этот хук:
-        В некоторых случаях в гд функция GDString::assign вызывается в заданной длинной,
+        В некоторых случаях в гд, функция GDString::assign вызывается в заданной длинной,
         которая ограничивает длинну строки, но переведенная строка может быть длиннее чем оригинальная.
         Было бы намного сложнее пропатчить все длины строк, учитывая то, что не везде указывается длина строки.
-        В общем, намного легче хукнуть эту функцию и установить новую длину строки.
+        В общем, намного легче хукнуть эту функцию и задать новую длину строки.
 
         Why this is required:
-        In some places of gd you can see that GDString::assign is called with fixed length
-        which limits a string to the length it was in the game but a translated string may be longer than the original one.
-        It is also pretty difficult to patch the length as it is not used in all calls and i would somehow need to find places to patch.
-        So it is easier to hook it and just set it to the string length instead of the fixed length.
+        In some places of gd you can see GDString::assign called with fixed length
+        which limits strings to the length it was in the game but the translated strings may be longer than the original ones.
+        It is also pretty difficult to patch the length as it is not used in all calls and i would somehow need to find places to patch
+        So it is easier to hook it and just set it to the string length instead of the fixed length
 */
-	gd_string_assign_o(self, src, strlen(src));
+    gd_string_assign_o(self, src, strlen(src));
 }
 
-void (__thiscall* gd_string_append_o)(void* self, char* src, size_t len);
-void gd_string_append_hk(void* self, char* src, size_t len) {
-    // Same as for gd::string::assign
+// void (__thiscall* gd_string_append_o)(void* self, char* src, size_t len);
+// void gd_string_append_hk(void* self, char* src, size_t len) {
+//     // Same as for gd::string::assign
 
-	gd_string_append_o(self, src, strlen(src));
-}
+// 	gd_string_append_o(self, src, strlen(src));
+// }
 
 #endif
 
 $execute {
-#if defined(GEODE_IS_WINDOWS)
-    auto addr = GetProcAddress(GetModuleHandleA("libcocos2d.dll"), "?FNTConfigLoadFile@cocos2d@@YAPAVCCBMFontConfiguration@1@PBD@Z");
-    auto res1 = Mod::get()->hook((void*)addr, FNTConfigLoadFile_hk, "cocos2d::FNTConfigLoadFile", tulip::hook::TulipConvention::Cdecl).err();
-#elif defined(GEODE_IS_ANDROID)
-    auto addr = dlsym(dlopen("libcocos2dcpp.so", RTLD_LAZY), "_ZN7cocos2d17FNTConfigLoadFileEPKc");
-    auto res1 = Mod::get()->hook((void*)addr, FNTConfigLoadFile_hk, "cocos2d::FNTConfigLoadFile", tulip::hook::TulipConvention::Default).err();
-#endif
-    if (res1 != std::nullopt) {
-        log::error("Failed to hook cocos2d::FNTConfigLoadFile because of: {}", res1);
-    }
-
 #ifdef GEODE_IS_WINDOWS
-    constexpr auto GD_STR_ASSIGN_ADDR = 0x1BB10;
-    gd_string_assign_o = reinterpret_cast<void (__thiscall*)(void*, char*, size_t)>(base::get() + GD_STR_ASSIGN_ADDR);
+    constexpr auto GD_STR_ASSIGN_ADDR = 0x3BE50;
+    gd_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + GD_STR_ASSIGN_ADDR);
     auto res2 = Mod::get()->hook((void*)(base::get() + GD_STR_ASSIGN_ADDR), gd_string_assign_hk, "gd::string::assign", tulip::hook::TulipConvention::Thiscall).err();
     if (res2 != std::nullopt) {
         log::error("Failed to hook gd::string::assign because of: {}", res2);
     }
     
-    constexpr auto GD_STR_APPEND_ADDR = 0x21DE0;
-    gd_string_append_o = reinterpret_cast<void (__thiscall*)(void*, char*, size_t)>(base::get() + GD_STR_APPEND_ADDR);
-    auto res3 = Mod::get()->hook((void*)(base::get() + GD_STR_APPEND_ADDR), gd_string_append_hk, "gd::string::append", tulip::hook::TulipConvention::Thiscall).err();
-    if (res3 != std::nullopt) {
-        log::error("Failed to hook gd::string::append because of: {}", res3);
-    }
+    // constexpr auto GD_STR_APPEND_ADDR = 0x21DE0;
+    // gd_string_append_o = reinterpret_cast<void (__thiscall*)(void*, char*, size_t)>(base::get() + GD_STR_APPEND_ADDR);
+    // auto res3 = Mod::get()->hook((void*)(base::get() + GD_STR_APPEND_ADDR), gd_string_append_hk, "gd::string::append", tulip::hook::TulipConvention::Thiscall).err();
+    // if (res3 != std::nullopt) {
+    //     log::error("Failed to hook gd::string::append because of: {}", res3);
+    // }
 #endif
 }
