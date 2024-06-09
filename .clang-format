@@ -1,17 +1,17 @@
 # https://clang.llvm.org/docs/ClangFormatStyleOptions.html
 IndentWidth: 4
-ColumnLimit: 140
+ColumnLimit: 150
 UseTab: Never
-AllowShortIfStatementsOnASingleLine: false
 UseCRLF: false
 AlignArrayOfStructures: None
 # AlignArrayOfStructures: Left
 # AlignConsecutiveAssignments: Consecutive
 AlignTrailingComments: true
+AllowShortIfStatementsOnASingleLine: false
 AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: InlineOnly
 AlwaysBreakTemplateDeclarations: Yes
 PointerAlignment: Left
 QualifierAlignment: Left
@@ -32,3 +32,4 @@ SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: true
 NamespaceIndentation: All
 SortIncludes: Never
+IndentPPDirectives: BeforeHash

@@ -1,3 +1,6 @@
 [submodule "libs/utf8"]
 	path = libs/utf8
 	url = https://github.com/nemtrif/utfcpp.git
+[submodule "libs/zydis"]
+	path = libs/zydis
+	url = https://github.com/zyantific/zydis.git

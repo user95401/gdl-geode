@@ -40,7 +40,7 @@
 	},
 	"api": {
 		"include": [
-			"src/stringPatch.hpp"
+			"api/*.hpp"
 		]
 	}
 }

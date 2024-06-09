@@ -8,11 +8,19 @@ using namespace keybinds;
 
 using namespace geode::prelude;
 
-#include "stringPatch.hpp"
+#include "../api/stringPatch.hpp"
 
 void patchStrings() {
+    bool res;
+    // res = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
+    // log::debug("{}", res);
+    // res = gdl::patchCString(base::get() + 0x350598, "Привет, мир 2!");
+    // log::debug("{}", res);
+    // res = gdl::patchCString(base::get() + 0x3505F1, "Привет, мир 3!");
+    // log::debug("{}", res);
+    res = gdl::patchStdString(base::get() + 0x315641, "Hello world!");
+    log::debug("{}", res);
 
-    
 //     static std::vector<std::string> strings;
 
 //     for (auto p : Mod::get()->getPatches()) {
