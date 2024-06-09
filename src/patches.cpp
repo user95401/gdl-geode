@@ -11,15 +11,19 @@ using namespace geode::prelude;
 #include "../api/stringPatch.hpp"
 
 void patchStrings() {
-    bool res;
+    // uint16_t test = 0x01; // РРрррррррррррррррр
+    // Mod::get()->patch((void*)(base::get() + 0x511FD4), ByteVector((uint8_t*)&test, (uint8_t*)&test + 2));
+    Mod::get()->patch((void*)(base::get() + 0x511FD4), {0x01, 0x00});  // Ррррррррррррррр
+    
+    // bool res;
     // res = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
     // log::debug("{}", res);
     // res = gdl::patchCString(base::get() + 0x350598, "Привет, мир 2!");
     // log::debug("{}", res);
     // res = gdl::patchCString(base::get() + 0x3505F1, "Привет, мир 3!");
     // log::debug("{}", res);
-    res = gdl::patchStdString(base::get() + 0x315641, "Hello world!");
-    log::debug("{}", res);
+    // res = gdl::patchStdString(base::get() + 0x315641, "Hello world!");
+    // log::debug("{}", res);
 
 //     static std::vector<std::string> strings;
 
