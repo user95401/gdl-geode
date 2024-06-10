@@ -1,5 +1,5 @@
 {
-	"geode": "3.0.0-alpha.1",
+	"geode": "3.0.0-alpha.2",
 	"version": "v2.0.0",
 	"gd": {
 		"android": "2.206",
@@ -18,16 +18,6 @@
 			"resources/sprites/*"
 		]
 	},
-	"dependencies": [
-		{
-			"id": "geode.custom-keybinds",
-			"importance": "required",
-			"platforms": [
-				"windows"
-			],
-			"version": ">=1.5.9"
-		}
-	],
 	"repository": "https://github.com/gdlocalisation",
 	"issues": {
 		"info": "You can report issues and ask questions in our [Discord server](https://discord.gg/CScsGU3N6M)",
