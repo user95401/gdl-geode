@@ -139,6 +139,7 @@ class $modify(CCTextureCache) {
             return CCTextureCache::addImage(newName.c_str(), idk);
 #endif
         }
+        
         return CCTextureCache::addImage(name, idk);
     }
 };

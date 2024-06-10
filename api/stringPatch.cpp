@@ -200,12 +200,25 @@ namespace gdl {
     }
 
     bool patchStdString(const uintptr_t srcAddr, const char* str) {
-        // uint8_t bytes[10] = {0x48,0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-        //     *(uintptr_t*)(bytes + 2) = (uintptr_t)str;
-
-        // Mod::get()->patch((void*)srcAddr, ByteVector(bytes, bytes + sizeof(bytes)));
-
-        // это было наивное предположение
+        // 1. patch the alloc_data function
+        //   1. patch `lea rcx/ecx, [...]` OR `mov ecx/rcx ...` to the correct string size (with \0).
+        //      i think that `mov ecx, <size>` is ok for all cases, because its 5 bytes (the smallest of all and can fit any 4byte int). FILL WITH NOPs!
+        //      UPD: nvm. `lea ecx, [rdi+50h]` is 3 bytes. max for such instruction to fit in 3 bytes is 0x7f aka 127.
+        //      Well i guess we are just limited to that size OR we could place a `call` that would (a) `mov ecx, <size>` (b) `call alloc_data` (c) `ret` (and fill with nops). idk yet
+        //   2. the next `mov ..., <NOT rax>` instruction is size, override it to the string len without \0. CAN BE A REGISTER INSTEAD OF VALUE!!! (in this case its smaller) (place call?)
+        //   3. the next `mov ..., <NOT rax>` instruction is capacity, override it to the string len (with \0 i guess?). CAN BE A REGISTER INSTEAD OF VALUE!!! (in this case its smaller) (place call?)
+        // 2. patch the string assignment
+        //   1. probably just memcpy the (OWNED!) string data (with \0!) to `rax` and then `ret`
+        //        lea     r8, [rbx+1]     ; Size
+        //        mov     rdx, r12        ; Src
+        //        mov     rcx, rax        ; void *
+        //        call    memcpy
+        //      (at 0x28643E)
+        //   2. place bytes for ^ into a free page
+        //   3. place `call` in place of original instructions (fill with nops all instructions that are `movups`, `movaps`, `movzx` (dont matter the operand bc it takes `eax`), `mov`
+        //      that take `[<any reg> + ...]` as the first operand). there can be any register because it could do `mov rcx, rax` and then `mov [rcx+...], ...`
+        // 3. shitty cases: 0x43A9A5 (fucked up order); 0x43A9A5, 0x43AA14 (3 byte lea ecx)
+        // 4. heck you compiler optimizations!!!
         
         return true;
     }
