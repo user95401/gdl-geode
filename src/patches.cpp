@@ -11,9 +11,11 @@ using namespace geode::prelude;
 #include "../api/stringPatch.hpp"
 
 void patchStrings() {
-    // uint16_t test = 0x01; // РРрррррррррррррррр
-    // Mod::get()->patch((void*)(base::get() + 0x511FD4), ByteVector((uint8_t*)&test, (uint8_t*)&test + 2));
-    Mod::get()->patch((void*)(base::get() + 0x511FD4), {0x01, 0x00});  // Ррррррррррррррр
+    // this fixes a bug when comments with cyrillic Р (and other letters containing byte 0xA0) are replaced with something by robtop and break the unicode sequence.
+    // We patch any other unused byte instead of 0xA0.
+    auto res = Mod::get()->patch((void*)(base::get() + 0xB44E6), {0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00}); // mov rax, 0x01
+    if (res.isErr())
+        log::warn("Failed to patch the Рррр fix ({}), be prepared that CommentCell with cyrillic comments may crash!", res.error());
     
     // bool res;
     // res = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
