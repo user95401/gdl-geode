@@ -97,29 +97,31 @@ $execute {
 #if defined(GEODE_IS_WINDOWS)
     SetConsoleOutputCP(65001); // utf8
 
-    BindManager::get()->registerBindable({
-        "reload"_spr,
-        "Reload lang file",
-        "",
-        { Keybind::create(KEY_P, Modifier::None) },
-        "GDL/Debug"
-    });
+    // if(Loader::get()->isModLoaded("geode.custom-keybinds")) {
+    //     BindManager::get()->registerBindable({
+    //         "reload"_spr,
+    //         "Reload lang file",
+    //         "",
+    //         { Keybind::create(KEY_P, Modifier::None) },
+    //         "GDL/Debug"
+    //     });
 
-    new EventListener([=](InvokeBindEvent* event) {
-        static bool wasPressed = false;
+    //     new EventListener([=](InvokeBindEvent* event) {
+    //         static bool wasPressed = false;
 
-        if (event->isDown()) {
-            if (!wasPressed) {
-                wasPressed = true;
-                patchStrings();
-                Notification::create("GDL: Updated strings", NotificationIcon::Success)->show();
-            }
-        } else {
-            wasPressed = false;
-        }
-        
-	    return ListenerResult::Propagate;
-    }, InvokeBindFilter(nullptr, "reload"_spr));
+    //         if (event->isDown()) {
+    //             if (!wasPressed) {
+    //                 wasPressed = true;
+    //                 patchStrings();
+    //                 Notification::create("GDL: Updated strings", NotificationIcon::Success)->show();
+    //             }
+    //         } else {
+    //             wasPressed = false;
+    //         }
+            
+    //         return ListenerResult::Propagate;
+    //     }, InvokeBindFilter(nullptr, "reload"_spr));
+    // }
 #endif
 
     patchStrings();
