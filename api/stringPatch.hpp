@@ -1,5 +1,6 @@
 #pragma once
 #include <Geode/Geode.hpp>
+#include <initializer_list>
 
 #ifdef GEODE_IS_WINDOWS
     #ifdef GDLAPI_EXPORTING
@@ -20,7 +21,11 @@ namespace gdl {
     /// @return Whether the patch was successful
     [[nodiscard]] bool patchCString(const uintptr_t srcAddr, const char* str);
 
-    [[nodiscard]] bool patchStdString(const uintptr_t srcAddr, const char* str);
+    // All addresses are absolute!
+    [[nodiscard]] bool patchStdString(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns);
+    
+    // same as patchStdString but all addresses are relative to gd base (it will be added to all addresses)
+    [[nodiscard]] bool patchStdStringRel(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns);
 
 #endif
 } // namespace gdl

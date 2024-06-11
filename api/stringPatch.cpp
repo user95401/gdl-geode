@@ -199,7 +199,14 @@ namespace gdl {
         return true;
     }
 
-    bool patchStdString(const uintptr_t srcAddr, const char* str) {
+    bool patchStdStringRel(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns) {
+        for (auto& el : assignInsns) {
+            el += base::get();
+        }
+        return patchStdString(str, base::get() + allocSizeInsn, base::get() + sizeInsn, base::get() + capacityInsn, assignInsns);
+    }
+
+    bool patchStdString(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> vector) {
         // 1. patch the alloc_data function
         //   1. patch `lea rcx/ecx, [...]` OR `mov ecx/rcx ...` to the correct string size (with \0).
         //      i think that `mov ecx, <size>` is ok for all cases, because its 5 bytes (the smallest of all and can fit any 4byte int). FILL WITH NOPs!
@@ -219,6 +226,43 @@ namespace gdl {
         //      that take `[<any reg> + ...]` as the first operand). there can be any register because it could do `mov rcx, rax` and then `mov [rcx+...], ...`
         // 3. shitty cases: 0x43A9A5 (fucked up order); 0x43A9A5, 0x43AA14 (3 byte lea ecx)
         // 4. heck you compiler optimizations!!!
+
+        // =========================================
+
+        // 0
+
+        ZydisDisassembledInstruction disasmInsn;
+        auto stringLen = strlen(str);
+        auto stringLenWith0 = stringLen + 1;
+
+        // 1.1
+
+        if (ZYAN_FAILED(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, allocSizeInsn, (void*)allocSizeInsn, ZYDIS_MAX_INSTRUCTION_LENGTH, &disasmInsn))) {
+            log::error("failed to disasm instruction at allocSizeInsn (0x{:X})", allocSizeInsn);
+            return false;
+        }
+
+        log::debug("{} ops, last type {}", disasmInsn.info.operand_count, (int)disasmInsn.operands[disasmInsn.info.operand_count-1].type);
+
+        if (disasmInsn.info.length < 5) { // mov ecx, <size> wouldn't fit
+            if (stringLenWith0 > 0x7f) {
+                // uh oh, we don't have enough space
+                // we need to allocate some space and `call` it
+
+                // TODO
+            } else {
+                ZydisEncoderRequest req;
+                memset(&req, 0, sizeof(req));
+
+                req.mnemonic = disasmInsn.info.mnemonic;
+                req.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
+                req.operand_count = disasmInsn.info.operand_count;
+                memcpy(req.operands, disasmInsn.operands, sizeof(disasmInsn.operands));
+                // req.operands[req.operand_count - 1].
+            }
+        } else {
+
+        }
         
         return true;
     }
