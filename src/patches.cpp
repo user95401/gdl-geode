@@ -13,10 +13,16 @@ using namespace geode::prelude;
 void patchStrings() {
     // this fixes a bug when comments with cyrillic Р (and other letters containing byte 0xA0) are replaced with something by robtop and break the unicode sequence.
     // We patch any other unused byte instead of 0xA0.
+#if   defined(GEODE_IS_WINDOWS)
     auto res = Mod::get()->patch((void*)(base::get() + 0xB44E6), {0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00}); // mov rax, 0x01
+#elif defined(GEODE_IS_ANDROID32)
+    static int dword = 0x01;  
+    auto res = Mod::get()->patch((void*)(base::get() + 0x32AA76), {0x00, 0xbf});
+    res = Mod::get()->patch((void*)(base::get() + 0x32ABF0), ByteVector((uint8_t*)&dword, (uint8_t*)&dword + 4));
+#endif
+
     if (res.isErr())
         log::warn("Failed to patch the Рррр fix ({}), be prepared that CommentCell with cyrillic comments may crash!", res.error());
-    
     // bool res;
     // res = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
     // log::debug("{}", res);

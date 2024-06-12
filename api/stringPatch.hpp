@@ -22,5 +22,7 @@ namespace gdl {
 
     [[nodiscard]] bool patchStdString(const uintptr_t srcAddr, const char* str);
 
+#elif defined(GEODE_IS_ANDROID32)
+    [[nodiscard]] bool patchString(const uintptr_t srcAddr, const char* str);
 #endif
 } // namespace gdl
