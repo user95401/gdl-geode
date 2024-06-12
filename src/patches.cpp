@@ -13,15 +13,17 @@ using namespace geode::prelude;
 void patchStrings() {
     // this fixes a bug when comments with cyrillic Р (and other letters containing byte 0xA0) are replaced with something by robtop and break the unicode sequence.
     // We patch any other unused byte instead of 0xA0.
-    geode::Result<geode::Patch*> res;
-#if defined(GEODE_IS_WINDOWS64)
-    res = Mod::get()->patch((void*)(base::get() + 0xB44E6), {0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00}); // mov rax, 0x01
+#if defined(GEODE_IS_WINDOWS)
+    auto res = Mod::get()->patch((void*)(base::get() + 0xB44E6), {0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00}); // mov rax, 0x01
 #elif defined(GEODE_IS_ANDROID32)
-    res = Mod::get()->patch((void*)(base::get() + 0xB44E6), {0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00}); // 
+    auto res = Mod::get()->patch((void*)(base::get() + 0x93E795), {0x01});
+#elif defined(GEODE_IS_ANDROID64)
+    auto res = Mod::get()->patch((void*)(base::get() + 0xE7F440), {0x01});
 #endif
+
     if (res.isErr())
         log::warn("Failed to patch the Рррр fix ({}), be prepared that CommentCell with cyrillic comments may crash!", res.error());
-    
+
     // bool res;
     // res = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
     // log::debug("{}", res);
@@ -32,10 +34,10 @@ void patchStrings() {
     // res = gdl::patchStdString(base::get() + 0x315641, "Hello world!");
     // log::debug("{}", res);
 
-    bool res2;
+    // bool res2;
 
-    res2 = gdl::patchStdStringRel("Hello world!", 0x31561F, 0x31562F, 0x315638, {});
-    log::debug("res {}", res2);
+    // res2 = gdl::patchStdStringRel("Hello world!", 0x31561F, 0x31562F, 0x315638, {});
+    // log::debug("res {}", res2);
 
 //     static std::vector<std::string> strings;
 

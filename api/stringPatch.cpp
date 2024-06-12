@@ -5,6 +5,8 @@
 
 using namespace geode::prelude;
 
+#if defined(GEODE_IS_WINDOWS64)
+
 class PageManager {
     struct Page {
         uint8_t* m_address;
@@ -106,7 +108,10 @@ class PageManager {
     std::vector<Page> m_pages;
 };
 
+#endif
+
 namespace gdl {
+#if defined(GEODE_IS_WINDOWS64)
     bool patchCString(const uintptr_t srcAddr, const char* str) {
         // 1. allocate memory near src addr (trampoline)
         // 2. write the instructions to it
@@ -309,4 +314,14 @@ namespace gdl {
 
         return true;
     }
+#elif defined(GEODE_IS_ANDROID32)
+    bool patchString(const uintptr_t dcd, const uintptr_t add, const char* str) {
+        bool ret = true;
+        
+        ret &= Mod::get()->patch((void*)dcd, ByteVector {(uint8_t*)&str, (uint8_t*)&str + 4}).isOk();
+        ret &= Mod::get()->patch((void*)add, ByteVector {0x00, 0xBF}).isOk();
+        
+        return ret;
+    }
+#endif
 } // namespace gdl

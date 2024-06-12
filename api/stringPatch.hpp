@@ -27,5 +27,7 @@ namespace gdl {
     // same as patchStdString but all addresses are relative to gd base (it will be added to all addresses)
     [[nodiscard]] bool patchStdStringRel(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns);
 
+#elif defined(GEODE_IS_ANDROID32)
+    [[nodiscard]] bool patchString(const uintptr_t srcAddr, const char* str);
 #endif
 } // namespace gdl

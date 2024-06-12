@@ -151,7 +151,7 @@ class $modify(CCLabelBMFont) {
         if (std::filesystem::exists(newName)) {
 #ifdef GEODE_IS_WINDOWS
             return CCLabelBMFont::initWithString(str, std::filesystem::relative(newName).string().c_str(), a3, a4, a5);
-#elif
+#else
             return CCLabelBMFont::initWithString(str, gdlutils::pathWithQuality(newName).c_str(), a3, a4, a5);
 #endif
         }
