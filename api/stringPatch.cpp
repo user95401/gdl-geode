@@ -195,7 +195,7 @@ namespace gdl {
 
         if (Mod::get()->patch((uint8_t*)srcAddr + 5, {0x90, 0x90}).isErr()) // lea is 7 bytes, jmp is 5 bytes => 2 nops
             return false;
-        
+
         return true;
     }
 
@@ -207,6 +207,7 @@ namespace gdl {
     }
 
     bool patchStdString(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> vector) {
+        // clang-format off
         // 1. patch the alloc_data function
         //   1. patch `lea rcx/ecx, [...]` OR `mov ecx/rcx ...` to the correct string size (with \0).
         //      i think that `mov ecx, <size>` is ok for all cases, because its 5 bytes (the smallest of all and can fit any 4byte int). FILL WITH NOPs!
@@ -226,44 +227,86 @@ namespace gdl {
         //      that take `[<any reg> + ...]` as the first operand). there can be any register because it could do `mov rcx, rax` and then `mov [rcx+...], ...`
         // 3. shitty cases: 0x43A9A5 (fucked up order); 0x43A9A5, 0x43AA14 (3 byte lea ecx)
         // 4. heck you compiler optimizations!!!
+        // clang-format on
 
         // =========================================
 
         // 0
-
         ZydisDisassembledInstruction disasmInsn;
         auto stringLen = strlen(str);
-        auto stringLenWith0 = stringLen + 1;
+        auto stringLenFull = stringLen + 1; // with \0
+
+        log::debug("string len 0x{:X}, full 0x{:X}", stringLen, stringLenFull);
 
         // 1.1
-
-        if (ZYAN_FAILED(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, allocSizeInsn, (void*)allocSizeInsn, ZYDIS_MAX_INSTRUCTION_LENGTH, &disasmInsn))) {
-            log::error("failed to disasm instruction at allocSizeInsn (0x{:X})", allocSizeInsn);
-            return false;
-        }
-
-        log::debug("{} ops, last type {}", disasmInsn.info.operand_count, (int)disasmInsn.operands[disasmInsn.info.operand_count-1].type);
-
-        if (disasmInsn.info.length < 5) { // mov ecx, <size> wouldn't fit
-            if (stringLenWith0 > 0x7f) {
-                // uh oh, we don't have enough space
-                // we need to allocate some space and `call` it
-
-                // TODO
-            } else {
-                ZydisEncoderRequest req;
-                memset(&req, 0, sizeof(req));
-
-                req.mnemonic = disasmInsn.info.mnemonic;
-                req.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
-                req.operand_count = disasmInsn.info.operand_count;
-                memcpy(req.operands, disasmInsn.operands, sizeof(disasmInsn.operands));
-                // req.operands[req.operand_count - 1].
+        {
+            if (ZYAN_FAILED(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, allocSizeInsn, (void*)allocSizeInsn, ZYDIS_MAX_INSTRUCTION_LENGTH, &disasmInsn))) {
+                log::error("failed to disasm instruction at allocSizeInsn (0x{:X})", allocSizeInsn);
+                return false;
             }
-        } else {
 
+            log::debug("{}", disasmInsn.text);
+            log::debug("{} ops, {} {}", disasmInsn.info.operand_count, (int)disasmInsn.operands[0].type, (int)disasmInsn.operands[1].type);
+
+            if (!(disasmInsn.info.operand_count == 2)) {
+                log::error("not 2 operands");
+                return false;
+            }
+
+            if (disasmInsn.info.length < 5) { // mov ecx, <size> wouldn't fit
+                if (stringLenFull > 0x7f) {
+                    // uh oh, we don't have enough space
+                    // we need to allocate some bytes and `call` them
+
+                    log::error("todo");
+                    return false;
+                } else {
+                    ZydisEncoderRequest req;
+                    memset(&req, 0, sizeof(req));
+
+                    req.mnemonic = ZYDIS_MNEMONIC_LEA;
+                    req.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
+                    req.operand_count = 2;
+
+                    req.operands[0].type = ZYDIS_OPERAND_TYPE_REGISTER;
+                    req.operands[0].reg.value = disasmInsn.operands[0].reg.value; // use original register
+
+                    req.operands[1].type = ZYDIS_OPERAND_TYPE_MEMORY;
+                    req.operands[1].mem.base = disasmInsn.operands[1].mem.base;
+                    req.operands[1].mem.displacement = stringLenFull;
+                    req.operands[1].mem.size = 8;
+
+                    ZyanU8 encoded_instruction[ZYDIS_MAX_INSTRUCTION_LENGTH];
+                    ZyanUSize encoded_length = sizeof(encoded_instruction);
+
+                    if (ZYAN_FAILED(ZydisEncoderEncodeInstruction(&req, encoded_instruction, &encoded_length))) {
+                        log::error("Failed to encode instruction [1]!");
+                        return false;
+                    }
+
+                    std::string zvzv = "";
+                    for (auto i = 0; i < encoded_length; i++) {
+                        zvzv += std::format("{:02X} ", encoded_instruction[i]);
+                    }
+                    log::debug("{}", zvzv);
+                }
+            } else {
+                log::error("todo");
+                return false;
+            }
         }
-        
+
+        // 1.2
+        {
+            if (ZYAN_FAILED(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, sizeInsn, (void*)sizeInsn, ZYDIS_MAX_INSTRUCTION_LENGTH, &disasmInsn))) {
+                log::error("failed to disasm instruction at sizeInsn (0x{:X})", sizeInsn);
+                return false;
+            }
+
+            log::debug("{}", disasmInsn.text);
+            log::debug("{} ops, {} {}", disasmInsn.info.operand_count, (int)disasmInsn.operands[0].type, (int)disasmInsn.operands[1].type);
+        }
+
         return true;
     }
 } // namespace gdl

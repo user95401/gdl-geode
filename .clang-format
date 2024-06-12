@@ -1,6 +1,6 @@
 # https://clang.llvm.org/docs/ClangFormatStyleOptions.html
 IndentWidth: 4
-ColumnLimit: 150
+ColumnLimit: 180
 UseTab: Never
 UseCRLF: false
 AlignArrayOfStructures: None
