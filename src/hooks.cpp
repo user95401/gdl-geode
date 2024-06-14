@@ -121,9 +121,10 @@ class $modify(MultilineBitmapFont) {
             if (auto pos = current.rfind(' '); pos != std::string::npos) {
                 current.erase(current.begin() + pos, current.end());
             }
+        } else {
+            current += " ";
         }
 
-        current += " ";
         return current;
     }
 };

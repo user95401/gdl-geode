@@ -22,7 +22,7 @@ void patchStrings() {
 #endif
 
     if (res.isErr())
-        log::warn("Failed to patch the Рррр fix ({}), be prepared that CommentCell with cyrillic comments may crash!", res.error());
+        log::warn("Failed to patch the Рррр fix ({}), be aware that CommentCell with cyrillic comments may crash!", res.error());
 
     // bool res;
     // res = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
