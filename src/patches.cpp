@@ -1,10 +1,10 @@
 #include <Geode/Geode.hpp>
 #include "utils.hpp"
 
-#if defined(GEODE_IS_WINDOWS)
-#include <geode.custom-keybinds/include/Keybinds.hpp>
-using namespace keybinds;
-#endif
+// #if defined(GEODE_IS_WINDOWS)
+// #include <geode.custom-keybinds/include/Keybinds.hpp>
+// using namespace keybinds;
+// #endif
 
 using namespace geode::prelude;
 
