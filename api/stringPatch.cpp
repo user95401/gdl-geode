@@ -211,7 +211,7 @@ namespace gdl {
         return patchStdString(str, base::get() + allocSizeInsn, base::get() + sizeInsn, base::get() + capacityInsn, assignInsns);
     }
 
-    bool patchStdString(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> vector) {
+    bool patchStdString(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns) {
         // clang-format off
         // 1. patch the alloc_data function
         //   1. patch `lea rcx/ecx, [...]` OR `mov ecx/rcx ...` to the correct string size (with \0).
@@ -253,7 +253,7 @@ namespace gdl {
             log::debug("{}", disasmInsn.text);
             log::debug("{} ops, {} {}", disasmInsn.info.operand_count, (int)disasmInsn.operands[0].type, (int)disasmInsn.operands[1].type);
 
-            if (!(disasmInsn.info.operand_count == 2)) {
+            if (disasmInsn.info.operand_count != 2) {
                 log::error("not 2 operands");
                 return false;
             }
@@ -301,26 +301,99 @@ namespace gdl {
             }
         }
 
-        // 1.2
-        {
-            if (ZYAN_FAILED(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, sizeInsn, (void*)sizeInsn, ZYDIS_MAX_INSTRUCTION_LENGTH, &disasmInsn))) {
-                log::error("failed to disasm instruction at sizeInsn (0x{:X})", sizeInsn);
+        auto helpme = [&](uintptr_t insnAddr, size_t immValue) {
+            if (ZYAN_FAILED(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, insnAddr, (void*)insnAddr, ZYDIS_MAX_INSTRUCTION_LENGTH, &disasmInsn))) {
+                log::error("failed to disasm instruction at 0x{:X}", insnAddr);
                 return false;
             }
 
             log::debug("{}", disasmInsn.text);
             log::debug("{} ops, {} {}", disasmInsn.info.operand_count, (int)disasmInsn.operands[0].type, (int)disasmInsn.operands[1].type);
+
+            if (disasmInsn.info.operand_count != 2) {
+                log::error("not 2 operands");
+                return false;
+            }
+
+            if (disasmInsn.operands[0].type != ZYDIS_OPERAND_TYPE_MEMORY) {
+                log::error("not mem op");
+                return false;
+            }
+
+            ZydisEncoderRequest req;
+            memset(&req, 0, sizeof(req));
+
+            req.mnemonic = disasmInsn.info.mnemonic;
+            req.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
+            req.operand_count = 2;
+
+            req.operands[0].type = ZYDIS_OPERAND_TYPE_MEMORY;
+            req.operands[0].mem.base = disasmInsn.operands[0].mem.base;
+            req.operands[0].mem.displacement = disasmInsn.operands[0].mem.disp.value;
+            req.operands[0].mem.size = 8;
+
+            req.operands[1].type = ZYDIS_OPERAND_TYPE_IMMEDIATE;
+            req.operands[1].imm.u = immValue;
+
+            ZyanU8 encoded_instruction[ZYDIS_MAX_INSTRUCTION_LENGTH];
+            ZyanUSize encoded_length = sizeof(encoded_instruction);
+
+            if (ZYAN_FAILED(ZydisEncoderEncodeInstruction(&req, encoded_instruction, &encoded_length))) {
+                log::error("Failed to encode instruction [2]!");
+                return false;
+            }
+
+            std::string zvzv = "";
+            for (auto i = 0; i < encoded_length; i++) {
+                zvzv += std::format("{:02X} ", encoded_instruction[i]);
+            }
+            log::debug("{}", zvzv);
+
+            if (encoded_length < disasmInsn.info.length) {
+                log::error("we dont fit =(");
+                return false;
+            }
+
+            return true;
+        };
+
+        // 1.2
+        if (!helpme(sizeInsn, stringLen))
+            return false;
+
+        // 1.3
+        if (!helpme(capacityInsn, stringLenFull))
+            return false;
+
+        // 2
+        {
+            // 2.1
+            uint8_t bytes[] = {
+                0x49, 0xC7, 0xC0, 0x44, 0x33, 0x22, 0x11, // mov r8, string len
+                0x48, 0xBA, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, // mov rdx, string addr
+                0x48, 0x89, 0xC1, // mov rcx, rax
+                0xE8, 0xA3, 0xE5, 0x21, 0x00 // call memcpy
+            };
+            *(uint32_t*)(bytes + 3) = static_cast<uint32_t>(stringLenFull);
+            *(uintptr_t*)(bytes + 9) = (uintptr_t)str;
+
+            // 2.2
+            // huh
+
+            // 2.3
+            // aaaaaaaaaaaaaaaaa
         }
 
         return true;
     }
+
 #elif defined(GEODE_IS_ANDROID32)
     bool patchString(const uintptr_t dcd, const uintptr_t add, const char* str) {
         bool ret = true;
-        
+
         ret &= Mod::get()->patch((void*)dcd, ByteVector {(uint8_t*)&str, (uint8_t*)&str + 4}).isOk();
         ret &= Mod::get()->patch((void*)add, ByteVector {0x00, 0xBF}).isOk();
-        
+
         return ret;
     }
 #endif

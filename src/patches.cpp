@@ -34,10 +34,10 @@ void patchStrings() {
     // res = gdl::patchStdString(base::get() + 0x315641, "Hello world!");
     // log::debug("{}", res);
 
-    // bool res2;
+    bool res2;
 
-    // res2 = gdl::patchStdStringRel("Hello world!", 0x31561F, 0x31562F, 0x315638, {});
-    // log::debug("res {}", res2);
+    res2 = gdl::patchStdStringRel("Hello world!", 0x31561F, 0x31562F, 0x315638, {});
+    log::debug("res {}", res2);
 
 //     static std::vector<std::string> strings;
 
