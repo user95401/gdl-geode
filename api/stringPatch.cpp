@@ -49,6 +49,13 @@ class PageManager {
         }
     }
 
+    void* getMemoryForSize(size_t size) {
+        auto& page = getPageForSize(size);
+        auto ret = page.getOffsetAddress();
+        page.reserve(size);
+        return ret;
+    }
+
   private:
     Page& allocNewPage() {
         SYSTEM_INFO sysInfo;
@@ -135,8 +142,9 @@ namespace gdl {
 
         // 1.
 
-        auto& page = PageManager::get().getPageForSize(14); // mov + lea + ret = 14 bytes
-        auto pageAddr = page.getOffsetAddress();
+        // auto& page = PageManager::get().getPageForSize(14); // mov + lea + ret = 14 bytes
+        // auto pageAddr = page.getOffsetAddress();
+        auto pageAddr = PageManager::get().getMemoryForSize(14);
 
         uint8_t buffer[14];
 
@@ -181,7 +189,7 @@ namespace gdl {
         buffer[13] = 0xc3;
 
         memcpy(pageAddr, buffer, sizeof(buffer));
-        page.reserve(14);
+        // page.reserve(14);
 
         // 3.
 
@@ -236,12 +244,16 @@ namespace gdl {
 
         // =========================================
 
+        std::vector<std::shared_ptr<Patch>> patches;
+        
         // 0
         ZydisDisassembledInstruction disasmInsn;
         auto stringLen = strlen(str);
         auto stringLenFull = stringLen + 1; // with \0
+        auto capacity = (int)(stringLen * 1.25f);
+        auto allocatingSize = capacity + 1;
 
-        log::debug("string len 0x{:X}, full 0x{:X}", stringLen, stringLenFull);
+        log::debug("string len {}, full {}, capacity {}, allocatingSize {}", stringLen, stringLenFull, capacity, allocatingSize);
 
         // 1.1
         {
@@ -259,7 +271,7 @@ namespace gdl {
             }
 
             if (disasmInsn.info.length < 5) { // mov ecx, <size> wouldn't fit
-                if (stringLenFull > 0x7f) {
+                if (allocatingSize > 0x7f) {
                     // uh oh, we don't have enough space
                     // we need to allocate some bytes and `call` them
 
@@ -278,7 +290,7 @@ namespace gdl {
 
                     req.operands[1].type = ZYDIS_OPERAND_TYPE_MEMORY;
                     req.operands[1].mem.base = disasmInsn.operands[1].mem.base;
-                    req.operands[1].mem.displacement = stringLenFull;
+                    req.operands[1].mem.displacement = allocatingSize;
                     req.operands[1].mem.size = 8;
 
                     ZyanU8 encoded_instruction[ZYDIS_MAX_INSTRUCTION_LENGTH];
@@ -294,6 +306,8 @@ namespace gdl {
                         zvzv += std::format("{:02X} ", encoded_instruction[i]);
                     }
                     log::debug("{}", zvzv);
+
+                    patches.push_back(Patch::create((void*)allocSizeInsn, ByteVector(encoded_instruction, encoded_instruction + encoded_length)));
                 }
             } else {
                 log::error("todo");
@@ -301,7 +315,7 @@ namespace gdl {
             }
         }
 
-        auto helpme = [&](uintptr_t insnAddr, size_t immValue) {
+        auto helpme = [&disasmInsn, &patches](uintptr_t insnAddr, size_t immValue) {
             if (ZYAN_FAILED(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, insnAddr, (void*)insnAddr, ZYDIS_MAX_INSTRUCTION_LENGTH, &disasmInsn))) {
                 log::error("failed to disasm instruction at 0x{:X}", insnAddr);
                 return false;
@@ -352,6 +366,8 @@ namespace gdl {
             if (encoded_length < disasmInsn.info.length) {
                 log::error("we dont fit =(");
                 return false;
+            } else {
+                patches.push_back(Patch::create((void*)insnAddr, ByteVector(encoded_instruction, encoded_instruction + encoded_length)));
             }
 
             return true;
@@ -362,26 +378,101 @@ namespace gdl {
             return false;
 
         // 1.3
-        if (!helpme(capacityInsn, stringLenFull))
+        if (!helpme(capacityInsn, capacity))
             return false;
 
-        // 2
         {
+            if (assignInsns.size() == 0) {
+                log::error("you didnt specify any assign instructions");
+                return false;
+            }
+
+            // 2.3
+            bool hasCallPatch = false;
+            uintptr_t callPatchAddr = 0;
+
+            for (auto i = 0; i < assignInsns.size(); i++) {
+                auto addr = assignInsns[i];
+
+                if (ZYAN_FAILED(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, addr, (void*)addr, ZYDIS_MAX_INSTRUCTION_LENGTH, &disasmInsn))) {
+                    log::error("failed to disasm instruction for step 2.3 at 0x{:X}", addr);
+                    return false;
+                }
+
+                log::debug("{}", disasmInsn.text);
+                log::debug("{} ops, {} {}", disasmInsn.info.operand_count, (int)disasmInsn.operands[0].type, (int)disasmInsn.operands[1].type);
+
+                if (disasmInsn.info.operand_count != 2) {
+                    log::error("not 2 operands");
+                    return false;
+                }
+
+                auto instructionLength = disasmInsn.info.length;
+
+                if (!hasCallPatch) { // add the call patch
+                    if (instructionLength >= 5) { // 5 bytes to fit the `call` instruction
+                        callPatchAddr = addr;
+                        hasCallPatch = true;
+
+                        if (instructionLength > 5) { // fill the rest of it with nops
+                            patches.push_back(Patch::create((void*)(addr + 5), ByteVector(instructionLength - 5, 0x90)));
+                        }
+
+                        continue;
+                    }
+                }
+
+                patches.push_back(Patch::create((void*)addr, ByteVector(instructionLength, 0x90)));
+            }
+
+            if (!hasCallPatch) {
+                log::error("all instructions cant fit call :(");
+                return false;
+            }
+            
             // 2.1
+            // clang-format off
             uint8_t bytes[] = {
-                0x49, 0xC7, 0xC0, 0x44, 0x33, 0x22, 0x11, // mov r8, string len
-                0x48, 0xBA, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, // mov rdx, string addr
+                0x49, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, // mov r8, string len
+                0x48, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov rdx, string addr
                 0x48, 0x89, 0xC1, // mov rcx, rax
-                0xE8, 0xA3, 0xE5, 0x21, 0x00 // call memcpy
+                0xE8, 0x00, 0x00, 0x00, 0x00, // call memcpy
+                0xC3 // ret
             };
+            // clang-format on
             *(uint32_t*)(bytes + 3) = static_cast<uint32_t>(stringLenFull);
             *(uintptr_t*)(bytes + 9) = (uintptr_t)str;
 
-            // 2.2
-            // huh
+            auto pageAddr = PageManager::get().getMemoryForSize(sizeof(bytes));
 
-            // 2.3
-            // aaaaaaaaaaaaaaaaa
+            const auto memcpyAddress = base::get() + 0x4A49F0;
+            const auto relAddrMemcpy = (uint64_t)memcpyAddress - ((uint64_t)pageAddr + 20 + 5);
+            log::debug("0x{:X}", relAddrMemcpy);
+            *(int32_t*)(bytes + 21) = (int32_t)relAddrMemcpy;
+            memcpy(pageAddr, bytes, sizeof(bytes));
+
+            std::string zzzz;
+            for (auto i = 0; i < sizeof(bytes); i++) {
+                zzzz += std::format("{:02X} ", bytes[i]);
+            }
+            log::debug("{}", zzzz);
+            
+            uint8_t callBytes[] = {0xe8, 0x00, 0x00, 0x00, 0x00};
+            const auto relAddr = (uint64_t)pageAddr - ((uint64_t)callPatchAddr + sizeof(callBytes));
+            *(int32_t*)(callBytes + 1) = (int32_t)relAddr;
+            patches.push_back(Patch::create((void*)callPatchAddr, ByteVector(callBytes, callBytes + sizeof(callBytes))));
+
+            for (auto p : patches) {
+                const auto& b = p->getBytes();
+                
+                std::string zvzv = "";
+                for (auto i = 0; i < b.size(); i++) {
+                    zvzv += std::format("{:02X} ", b[i]);
+                }
+
+                auto patchRes = Mod::get()->claimPatch(p);
+                log::debug("Patch at 0x{:X}: {} {}", p->getAddress(), zvzv, patchRes.isOk());
+            }
         }
 
         return true;

@@ -24,20 +24,19 @@ void patchStrings() {
     if (res.isErr())
         log::warn("Failed to patch the Рррр fix ({}), be aware that CommentCell with cyrillic comments may crash!", res.error());
 
-    // bool res;
-    // res = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
-    // log::debug("{}", res);
-    // res = gdl::patchCString(base::get() + 0x350598, "Привет, мир 2!");
-    // log::debug("{}", res);
-    // res = gdl::patchCString(base::get() + 0x3505F1, "Привет, мир 3!");
-    // log::debug("{}", res);
-    // res = gdl::patchStdString(base::get() + 0x315641, "Hello world!");
-    // log::debug("{}", res);
+#ifdef GEODE_IS_WINDOWS64
+    // bool res3;
+    // res3 = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
+    // log::debug("{}", res3);
+    // res3 = gdl::patchCString(base::get() + 0x350598, "Привет, мир 2!");
+    // log::debug("{}", res3);
+    // res3 = gdl::patchCString(base::get() + 0x3505F1, "Привет, мир 3!");
+    // log::debug("{}", res3);
 
     bool res2;
-
-    res2 = gdl::patchStdStringRel("Hello world!", 0x31561F, 0x31562F, 0x315638, {});
+    res2 = gdl::patchStdStringRel("This is a very very long string!", 0x31561F, 0x31562F, 0x315638, {0x315641, 0x315648, 0x31564B, 0x315652, 0x315656, 0x31565C, 0x31565F, 0x315666, 0x31566A});
     log::debug("res {}", res2);
+#endif
 
 //     static std::vector<std::string> strings;
 
