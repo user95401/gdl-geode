@@ -293,9 +293,9 @@ namespace gdl {
 
                     const auto trampLen = 5 + nextLen + 1;
                     auto trampAddr = PageManager::get().getMemoryForSize(trampLen); // mov, next instruction, ret
-                    trampAddr[0] = 0xB9; // mov
+                    trampAddr[0] = 0xB9;                                            // mov
                     *(uint32_t*)(trampAddr + 1) = (uint32_t)allocatingSize;
-                    trampAddr[trampLen-1] = 0xC3; // ret
+                    trampAddr[trampLen - 1] = 0xC3; // ret
 
                     memcpy(trampAddr + 5, (void*)nextAddr, nextLen);
                     if (nextInsn.info.mnemonic == ZYDIS_MNEMONIC_CALL) {
@@ -304,12 +304,6 @@ namespace gdl {
                         const auto relAddr = (uint64_t)resultingAddress - ((uint64_t)trampAddr + 5 + nextLen);
                         *(int32_t*)(trampAddr + 5 + 1) = (int32_t)relAddr;
                     }
-
-                    // std::string zzz;
-                    // for (auto i = 0; i < trampLen; i++) {
-                    //     zzz += std::format("{:02X} ", trampAddr[i]);
-                    // }
-                    // log::debug("{}", zzz);
 
                     auto srcTotalLen = srcLen + nextLen;
                     auto srcPatchBytes = new uint8_t[srcTotalLen];
@@ -354,7 +348,7 @@ namespace gdl {
             ZydisEncoderRequest req;
             memset(&req, 0, sizeof(req));
 
-            req.mnemonic = disasmInsn.info.mnemonic;
+            req.mnemonic = ZYDIS_MNEMONIC_MOV;
             req.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
             req.operand_count = 2;
 
@@ -374,17 +368,64 @@ namespace gdl {
                 return false;
             }
 
-            std::string zvzv = "";
-            for (auto i = 0; i < encoded_length; i++) {
-                zvzv += std::format("{:02X} ", encoded_instruction[i]);
-            }
-            log::debug("{}", zvzv);
+            const auto srcLen = disasmInsn.info.length;
 
-            if (encoded_length < disasmInsn.info.length) {
-                log::error("we dont fit =(");
-                return false;
+            if (srcLen < encoded_length) {
+                if (srcLen >= 5) { // enough space for a call
+                    auto tramp = PageManager::get().getMemoryForSize(encoded_length + 1);
+                    memcpy(tramp, encoded_instruction, encoded_length);
+                    tramp[encoded_length] = 0xc3; // ret
+
+                    auto bytes = new uint8_t[srcLen];
+                    memset(bytes, 0x90, srcLen);
+                    bytes[0] = 0xe8;
+
+                    const auto relAddr = (uint64_t)tramp - ((uint64_t)insnAddr + 5);
+                    *(int32_t*)(bytes + 1) = (int32_t)relAddr;
+
+                    patches.push_back(Patch::create((void*)insnAddr, ByteVector(bytes, bytes + srcLen)));
+
+                    delete[] bytes;
+                } else {
+                    // because the instruction takes less than 5 bytes and call takes 5 bytes, we also need to copy the next instruction into the tramp.
+                    // if the next insn is `call alloc_fn`, then change the address because it is rip-relative
+                    ZydisDisassembledInstruction nextInsn;
+                    const auto nextAddr = insnAddr + srcLen;
+                    if (ZYAN_FAILED(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, nextAddr, (void*)nextAddr, ZYDIS_MAX_INSTRUCTION_LENGTH, &nextInsn))) {
+                        log::error("failed to disasm instruction at nextAddr (0x{:X})", nextAddr);
+                        return false;
+                    }
+                    const auto nextLen = nextInsn.info.length;
+
+                    const auto trampLen = encoded_length + nextLen + 1;
+                    auto trampAddr = PageManager::get().getMemoryForSize(trampLen); // mov, next instruction, ret
+                    memcpy(trampAddr, encoded_instruction, encoded_length);
+                    trampAddr[trampLen - 1] = 0xC3; // ret
+
+                    memcpy(trampAddr + encoded_length, (void*)nextAddr, nextLen);
+                    if (nextInsn.info.mnemonic == ZYDIS_MNEMONIC_CALL) {
+                        const auto resultingAddress = nextAddr + nextLen + nextInsn.operands[0].imm.value.u;
+
+                        const auto relAddr = (uint64_t)resultingAddress - ((uint64_t)trampAddr + encoded_length + nextLen);
+                        *(int32_t*)(trampAddr + encoded_length + 1) = (int32_t)relAddr;
+                    }
+
+                    auto srcTotalLen = srcLen + nextLen;
+                    auto srcPatchBytes = new uint8_t[srcTotalLen];
+                    memset(srcPatchBytes, 0x90, srcTotalLen);
+                    srcPatchBytes[0] = 0xE8;
+
+                    const auto relAddr = (uint64_t)trampAddr - ((uint64_t)insnAddr + 5);
+                    *(int32_t*)(srcPatchBytes + 1) = (int32_t)relAddr;
+
+                    patches.push_back(Patch::create((void*)insnAddr, ByteVector(srcPatchBytes, srcPatchBytes + srcTotalLen)));
+                }
             } else {
                 patches.push_back(Patch::create((void*)insnAddr, ByteVector(encoded_instruction, encoded_instruction + encoded_length)));
+                if (srcLen > encoded_length) {
+                    log::debug("[2] more!");
+                    patches.push_back(Patch::create((void*)(insnAddr + encoded_length), ByteVector(srcLen - encoded_length, 0x90)));
+                }
             }
 
             return true;
