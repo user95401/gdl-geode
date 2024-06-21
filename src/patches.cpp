@@ -35,7 +35,7 @@ void patchStrings() {
     log::debug("{}", res3);
 
     bool res2;
-    res2 = gdl::patchStdStringRel("This is a very very long string! Привет мир!", 0x31561F, 0x31562F, 0x315638, {0x315641, 0x315648, 0x31564B, 0x315652, 0x315656, 0x31565C, 0x31565F, 0x315666, 0x31566A});
+    res2 = gdl::patchStdStringRel("This is a very very long string1!This is a very very long string2!This is a very very long string3!This is a very very long string4!This is a very very long string5!", 0x31561F, 0x31562F, 0x315638, {0x315641, 0x315648, 0x31564B, 0x315652, 0x315656, 0x31565C, 0x31565F, 0x315666, 0x31566A});
     log::debug("res {}", res2);
 #endif
 

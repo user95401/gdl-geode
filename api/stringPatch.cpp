@@ -2,6 +2,7 @@
 
 #include <Zydis/Zydis.h>
 #include <string.h>
+#include <chrono>
 
 using namespace geode::prelude;
 
@@ -190,12 +191,12 @@ namespace gdl {
         return patchStdString(str, base::get() + allocSizeInsn, base::get() + sizeInsn, base::get() + capacityInsn, assignInsns);
     }
 
-    bool patchStdString(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns) {
+    bool patchStdString(const char* str_, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns) {
         // clang-format off
         // 1. patch the alloc_data function
         //   1. patch `lea rcx/ecx, [...]` OR `mov ecx/rcx ...` to the correct string size (with \0).
         //      i think that `mov ecx, <size>` is ok for all cases, because its 5 bytes (the smallest of all and can fit any 4byte int). FILL WITH NOPs!
-        //      UPD: nvm. `lea ecx, [rdi+50h]` is 3 bytes. max for such instruction to fit in 3 bytes is 0x7f aka 127.
+        //      UPD: nvm. `lea ecx, [rdi+50h]` is 3 bytes. max for such instruction to fit in 3 bytes is 0x7f aka 127. there can also be 4 byte ones
         //      Well i guess we are just limited to that size OR we could place a `call` that would (a) `mov ecx, <size>` (b) `call alloc_data` (c) `ret` (and fill with nops). idk yet
         //   2. the next `mov ..., <NOT rax>` instruction is size, override it to the string len without \0. CAN BE A REGISTER INSTEAD OF VALUE!!! (in this case its smaller) (place call?)
         //   3. the next `mov ..., <NOT rax>` instruction is capacity, override it to the string len (with \0 i guess?). CAN BE A REGISTER INSTEAD OF VALUE!!! (in this case its smaller) (place call?)
@@ -214,6 +215,10 @@ namespace gdl {
         // clang-format on
 
         // =========================================
+
+        auto str = _strdup(str_);
+        static std::vector<const char*> strings;
+        strings.push_back(str);
 
         std::vector<std::shared_ptr<Patch>> patches;
 
@@ -241,14 +246,10 @@ namespace gdl {
                 return false;
             }
 
-            if (disasmInsn.info.length < 5) { // mov ecx, <size> wouldn't fit
-                if (allocatingSize > 0x7f) {
-                    // uh oh, we don't have enough space
-                    // we need to allocate some bytes and `call` them
+            const auto srcLen = disasmInsn.info.length;
 
-                    log::error("todo");
-                    return false;
-                } else {
+            if (srcLen < 5) {                 // mov ecx, <size> won't fit
+                if (allocatingSize <= 0x7f) { // the original instruction will fit
                     ZydisEncoderRequest req;
                     memset(&req, 0, sizeof(req));
 
@@ -279,10 +280,55 @@ namespace gdl {
                     log::debug("{}", zvzv);
 
                     patches.push_back(Patch::create((void*)allocSizeInsn, ByteVector(encoded_instruction, encoded_instruction + encoded_length)));
+                } else { // the original instruction wont fit
+                    // because the instruction takes less than 5 bytes and call takes 5 bytes, we also need to copy the next instruction into the tramp.
+                    // if the next insn is `call alloc_fn`, then change the address because it is rip-relative
+                    ZydisDisassembledInstruction nextInsn;
+                    const auto nextAddr = allocSizeInsn + srcLen;
+                    if (ZYAN_FAILED(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, nextAddr, (void*)nextAddr, ZYDIS_MAX_INSTRUCTION_LENGTH, &nextInsn))) {
+                        log::error("failed to disasm instruction at nextAddr (0x{:X})", nextAddr);
+                        return false;
+                    }
+                    const auto nextLen = nextInsn.info.length;
+
+                    const auto trampLen = 5 + nextLen + 1;
+                    auto trampAddr = PageManager::get().getMemoryForSize(trampLen); // mov, next instruction, ret
+                    trampAddr[0] = 0xB9; // mov
+                    *(uint32_t*)(trampAddr + 1) = (uint32_t)allocatingSize;
+                    trampAddr[trampLen-1] = 0xC3; // ret
+
+                    memcpy(trampAddr + 5, (void*)nextAddr, nextLen);
+                    if (nextInsn.info.mnemonic == ZYDIS_MNEMONIC_CALL) {
+                        const auto resultingAddress = nextAddr + nextLen + nextInsn.operands[0].imm.value.u;
+
+                        const auto relAddr = (uint64_t)resultingAddress - ((uint64_t)trampAddr + 5 + nextLen);
+                        *(int32_t*)(trampAddr + 5 + 1) = (int32_t)relAddr;
+                    }
+
+                    // std::string zzz;
+                    // for (auto i = 0; i < trampLen; i++) {
+                    //     zzz += std::format("{:02X} ", trampAddr[i]);
+                    // }
+                    // log::debug("{}", zzz);
+
+                    auto srcTotalLen = srcLen + nextLen;
+                    auto srcPatchBytes = new uint8_t[srcTotalLen];
+                    memset(srcPatchBytes, 0x90, srcTotalLen);
+                    srcPatchBytes[0] = 0xE8;
+
+                    const auto relAddr = (uint64_t)trampAddr - ((uint64_t)allocSizeInsn + 5);
+                    *(int32_t*)(srcPatchBytes + 1) = (int32_t)relAddr;
+
+                    patches.push_back(Patch::create((void*)allocSizeInsn, ByteVector(srcPatchBytes, srcPatchBytes + srcTotalLen)));
                 }
             } else {
-                log::error("todo");
-                return false;
+                // mov ecx, <val> and fill rest with nops
+                auto bytes = new uint8_t[srcLen];
+                memset(bytes, 0x90, srcLen); // fill with nops
+                bytes[0] = 0xB9;
+                *(uint32_t*)(bytes + 1) = (uint32_t)allocatingSize;
+                patches.push_back(Patch::create((void*)allocSizeInsn, ByteVector(bytes, bytes + srcLen)));
+                delete[] bytes;
             }
         }
 
