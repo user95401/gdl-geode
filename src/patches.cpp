@@ -13,28 +13,29 @@ using namespace geode::prelude;
 void patchStrings() {
     // this fixes a bug when comments with cyrillic Р (and other letters containing byte 0xA0) are replaced with something by robtop and break the unicode sequence.
     // We patch any other unused byte instead of 0xA0.
+    Result<Patch*> res;
 #if defined(GEODE_IS_WINDOWS)
-    auto res = Mod::get()->patch((void*)(base::get() + 0xB44E6), {0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00}); // mov rax, 0x01
+    res = Mod::get()->patch((void*)(base::get() + 0xB44E6), {0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00}); // mov rax, 0x01
 #elif defined(GEODE_IS_ANDROID32)
-    auto res = Mod::get()->patch((void*)(base::get() + 0x93E795), {0x01});
+    res = Mod::get()->patch((void*)(base::get() + 0x93E795), {0x01});
 #elif defined(GEODE_IS_ANDROID64)
-    auto res = Mod::get()->patch((void*)(base::get() + 0xE7F440), {0x01});
+    res = Mod::get()->patch((void*)(base::get() + 0xE7F440), {0x01});
 #endif
 
     if (res.isErr())
         log::warn("Failed to patch the Рррр fix ({}), be aware that CommentCell with cyrillic comments may crash!", res.error());
 
 #ifdef GEODE_IS_WINDOWS64
-    // bool res3;
-    // res3 = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
-    // log::debug("{}", res3);
-    // res3 = gdl::patchCString(base::get() + 0x350598, "Привет, мир 2!");
-    // log::debug("{}", res3);
-    // res3 = gdl::patchCString(base::get() + 0x3505F1, "Привет, мир 3!");
-    // log::debug("{}", res3);
+    bool res3;
+    res3 = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
+    log::debug("{}", res3);
+    res3 = gdl::patchCString(base::get() + 0x350598, "Привет, мир 2!");
+    log::debug("{}", res3);
+    res3 = gdl::patchCString(base::get() + 0x3505F1, "Привет, мир 3!");
+    log::debug("{}", res3);
 
     bool res2;
-    res2 = gdl::patchStdStringRel("This is a very very long string!", 0x31561F, 0x31562F, 0x315638, {0x315641, 0x315648, 0x31564B, 0x315652, 0x315656, 0x31565C, 0x31565F, 0x315666, 0x31566A});
+    res2 = gdl::patchStdStringRel("This is a very very long string! Привет мир!", 0x31561F, 0x31562F, 0x315638, {0x315641, 0x315648, 0x31564B, 0x315652, 0x315656, 0x31565C, 0x31565F, 0x315666, 0x31566A});
     log::debug("res {}", res2);
 #endif
 

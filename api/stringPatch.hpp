@@ -19,7 +19,7 @@ namespace gdl {
     /// @param absAddr The ABSOLUTE address of the `lea` instruction
     /// @param str A string. Note that it will be duplicated so the orignal string can be freed
     /// @return Whether the patch was successful
-    [[nodiscard]] bool patchCString(const uintptr_t srcAddr, const char* str);
+    [[nodiscard]] bool patchCString(uintptr_t srcAddr, const char* str);
 
     // All addresses are absolute!
     [[nodiscard]] bool patchStdString(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns);

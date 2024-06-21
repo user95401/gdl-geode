@@ -49,7 +49,7 @@ class PageManager {
         }
     }
 
-    void* getMemoryForSize(size_t size) {
+    uint8_t* getMemoryForSize(size_t size) {
         auto& page = getPageForSize(size);
         auto ret = page.getOffsetAddress();
         page.reserve(size);
@@ -119,17 +119,16 @@ class PageManager {
 
 namespace gdl {
 #if defined(GEODE_IS_WINDOWS64)
-    bool patchCString(const uintptr_t srcAddr, const char* str) {
-        // 1. allocate memory near src addr (trampoline)
-        // 2. write the instructions to it
-        // 3. write the `call` to the allocated memory instruction to the src addr
-        // 4. fill with `nop`
-
-        // using zydis here because the instruction can have different bytes for different registers
+    bool patchCString(uintptr_t srcAddr, const char* str) {
         ZydisDisassembledInstruction instruction;
         if (ZYAN_SUCCESS(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, srcAddr, (void*)srcAddr, ZYDIS_MAX_INSTRUCTION_LENGTH, &instruction))) {
             if (instruction.info.opcode != 0x8d) {
                 log::error("instruction is not lea!");
+                return false;
+            }
+
+            if (instruction.info.length != 7) {
+                log::error("wtf instruction isnt 7 bytes long");
                 return false;
             }
         } else {
@@ -140,74 +139,46 @@ namespace gdl {
         static std::vector<const char*> strings;
         strings.push_back(_strdup(str)); // now we actually own the string
 
-        // 1.
+        // mov <original reg>, <string address>
+        ZydisEncoderRequest req;
+        memset(&req, 0, sizeof(req));
 
-        // auto& page = PageManager::get().getPageForSize(14); // mov + lea + ret = 14 bytes
-        // auto pageAddr = page.getOffsetAddress();
-        auto pageAddr = PageManager::get().getMemoryForSize(14);
+        req.mnemonic = ZYDIS_MNEMONIC_MOV;
+        req.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
+        req.operand_count = 2;
 
-        uint8_t buffer[14];
+        req.operands[0].type = ZYDIS_OPERAND_TYPE_REGISTER;
+        req.operands[0].reg.value = instruction.operands[0].reg.value;
 
-        // 2.
+        req.operands[1].type = ZYDIS_OPERAND_TYPE_IMMEDIATE;
+        req.operands[1].imm.u = (uintptr_t)strings.back();
 
-        // mov r11, stringAddress (10 bytes)
-        {
-            uint8_t bytes[10] = {0x49, 0xBB, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-            *(uintptr_t*)(bytes + 2) = (uintptr_t)strings.back();
-            memcpy(buffer, bytes, sizeof(bytes));
+        ZyanU8 encoded_instruction[ZYDIS_MAX_INSTRUCTION_LENGTH];
+        ZyanUSize encoded_length = sizeof(encoded_instruction);
+
+        if (ZYAN_FAILED(ZydisEncoderEncodeInstruction(&req, encoded_instruction, &encoded_length))) {
+            log::error("Failed to encode instruction!");
+            return false;
         }
 
-        // lea <original register>, [r11] (3 bytes)
-        {
-            // using zydis here because the instruction can have different bytes for different registers
-            ZydisEncoderRequest req;
-            memset(&req, 0, sizeof(req));
+        // because our instruction takes 10 bytes and the original one takes 7 bytes, we need to place a `call` in place of the original instruction that points to a trampoline
+        // that we allocate which, in its turn, will contain the `mov` and `ret` instructions
 
-            req.mnemonic = ZYDIS_MNEMONIC_LEA;
-            req.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
-            req.operand_count = 2;
-            req.operands[0].type = ZYDIS_OPERAND_TYPE_REGISTER;
-            req.operands[0].reg.value = instruction.operands[0].reg.value; // use original register
+        auto tramp = PageManager::get().getMemoryForSize(encoded_length + 1); // + 1 because of `ret`
 
-            req.operands[1].type = ZYDIS_OPERAND_TYPE_MEMORY;
-            req.operands[1].mem.base = ZYDIS_REGISTER_R11;
-            req.operands[1].mem.displacement = 0;
-            req.operands[1].mem.size = 8;
+        memcpy(tramp, encoded_instruction, encoded_length);
+        tramp[encoded_length] = 0xC3; // ret
 
-            ZyanU8 encoded_instruction[ZYDIS_MAX_INSTRUCTION_LENGTH];
-            ZyanUSize encoded_length = sizeof(encoded_instruction);
+        // now, the call instruction
 
-            if (ZYAN_FAILED(ZydisEncoderEncodeInstruction(&req, encoded_instruction, &encoded_length))) {
-                log::error("Failed to encode instruction!");
-                return false;
-            }
+        uint8_t callBytes[] = {0xE8, 0x00, 0x00, 0x00, 0x00, 0x90, 0x90}; // call <tramp> and 2 NOPs
+        auto relAddr = (uintptr_t)tramp - ((uintptr_t)srcAddr + 5);       // call is 5 bytes long
+        *(int32_t*)(callBytes + 1) = (int32_t)relAddr;
 
-            memcpy(buffer + 10, encoded_instruction, encoded_length);
+        if (Mod::get()->patch((void*)srcAddr, ByteVector(callBytes, callBytes + sizeof(callBytes))).isErr()) {
+            log::error("failed to patch!");
+            return false;
         }
-
-        // ret (1 byte)
-        buffer[13] = 0xc3;
-
-        memcpy(pageAddr, buffer, sizeof(buffer));
-        // page.reserve(14);
-
-        // 3.
-
-        uint8_t newSrcBytes[] = {
-            0xe8, 0x00, 0x00, 0x00, 0x00 // call ... (to go to our trampoline, using `call` instead of `jmp` so we can get back with `ret`)
-        };
-
-        const auto relAddr = (uint64_t)pageAddr - ((uint64_t)srcAddr + sizeof(newSrcBytes));
-
-        *(int32_t*)(newSrcBytes + 1) = (int32_t)relAddr;
-
-        if (Mod::get()->patch((void*)srcAddr, ByteVector(newSrcBytes, newSrcBytes + sizeof(newSrcBytes))).isErr())
-            return false;
-
-        // 4.
-
-        if (Mod::get()->patch((uint8_t*)srcAddr + 5, {0x90, 0x90}).isErr()) // lea is 7 bytes, jmp is 5 bytes => 2 nops
-            return false;
 
         return true;
     }
@@ -245,12 +216,12 @@ namespace gdl {
         // =========================================
 
         std::vector<std::shared_ptr<Patch>> patches;
-        
+
         // 0
         ZydisDisassembledInstruction disasmInsn;
         auto stringLen = strlen(str);
         auto stringLenFull = stringLen + 1; // with \0
-        auto capacity = (int)(stringLen * 1.25f);
+        auto capacity = stringLenFull;
         auto allocatingSize = capacity + 1;
 
         log::debug("string len {}, full {}, capacity {}, allocatingSize {}", stringLen, stringLenFull, capacity, allocatingSize);
@@ -409,7 +380,7 @@ namespace gdl {
 
                 auto instructionLength = disasmInsn.info.length;
 
-                if (!hasCallPatch) { // add the call patch
+                if (!hasCallPatch) {              // add the call patch
                     if (instructionLength >= 5) { // 5 bytes to fit the `call` instruction
                         callPatchAddr = addr;
                         hasCallPatch = true;
@@ -429,7 +400,7 @@ namespace gdl {
                 log::error("all instructions cant fit call :(");
                 return false;
             }
-            
+
             // 2.1
             // clang-format off
             uint8_t bytes[] = {
@@ -456,7 +427,7 @@ namespace gdl {
                 zzzz += std::format("{:02X} ", bytes[i]);
             }
             log::debug("{}", zzzz);
-            
+
             uint8_t callBytes[] = {0xe8, 0x00, 0x00, 0x00, 0x00};
             const auto relAddr = (uint64_t)pageAddr - ((uint64_t)callPatchAddr + sizeof(callBytes));
             *(int32_t*)(callBytes + 1) = (int32_t)relAddr;
@@ -464,7 +435,7 @@ namespace gdl {
 
             for (auto p : patches) {
                 const auto& b = p->getBytes();
-                
+
                 std::string zvzv = "";
                 for (auto i = 0; i < b.size(); i++) {
                     zvzv += std::format("{:02X} ", b[i]);
@@ -472,6 +443,8 @@ namespace gdl {
 
                 auto patchRes = Mod::get()->claimPatch(p);
                 log::debug("Patch at 0x{:X}: {} {}", p->getAddress(), zvzv, patchRes.isOk());
+                if (!patchRes)
+                    log::error("Patch failed!!!");
             }
         }
 
