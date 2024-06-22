@@ -3,7 +3,7 @@
 
 Geometry Dash Localization is a modification that translates Geometry Dash into other languages.
 
-__If you want to translate GD into your language, please write in our [Discord server](https://discord.gg/CScsGU3N6M) or to @jaan2897 in Discord.__
+__If you want to translate GD into your language, please message us in our [Discord server](https://discord.gg/CScsGU3N6M) or @jaan2897 in Discord.__
 
 ## Authors
 - [__@jaan2897__](https://github.com/JaanDev) - project founder, programmer, website creator, texture and font redrawer.
