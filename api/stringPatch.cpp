@@ -226,7 +226,7 @@ namespace gdl {
         ZydisDisassembledInstruction disasmInsn;
         auto stringLen = strlen(str);
         auto stringLenFull = stringLen + 1; // with \0
-        auto capacity = stringLenFull;
+        auto capacity = std::max(stringLenFull, 0x10ull); // use bigger capacity to ensure that smaller strings (<= 15 bytes in length) work properly
         auto allocatingSize = capacity + 1;
 
         log::debug("string len {}, full {}, capacity {}, allocatingSize {}", stringLen, stringLenFull, capacity, allocatingSize);
@@ -484,6 +484,7 @@ namespace gdl {
             }
 
             if (!hasCallPatch) {
+                // wontfix
                 log::error("all instructions cant fit call :(");
                 return false;
             }
