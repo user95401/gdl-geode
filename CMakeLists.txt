@@ -23,7 +23,7 @@ else()
     message(STATUS "Found Geode: $ENV{GEODE_SDK}")
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE libs src)
+target_include_directories(${PROJECT_NAME} PRIVATE libs src api)
 
 add_subdirectory(libs/utf8)
 add_subdirectory(libs/zydis)

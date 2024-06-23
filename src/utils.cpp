@@ -6,7 +6,7 @@ using namespace geode::prelude;
 json gdlutils::loadJson(const std::string& name) {
     std::ifstream translationFileStream(name);
 
-    if (translationFileStream) {
+    if (translationFileStream.is_open()) {
         try {
             nlohmann::json translationObj;
             translationFileStream >> translationObj;
@@ -38,4 +38,13 @@ std::string gdlutils::pathWithQuality(const std::filesystem::path& path) {
         default:
             return path.string();
     }
+}
+
+void gdlutils::reloadAll() {
+	CCDirector::sharedDirector()->updateContentScale(CCDirector::get()->getLoadedTextureQuality());
+
+	auto gameManager = GameManager::sharedState();
+	// gameManager->setQuality(CCDirector::get()->getLoadedTextureQuality());
+	CCTexture2D::setDefaultAlphaPixelFormat(kCCTexture2DPixelFormat_RGBA4444);
+	gameManager->reloadAll(false, false, true);
 }

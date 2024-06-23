@@ -15,7 +15,11 @@
 			"resources/patches/*",
 			"resources/loc/*",
 			"resources/fonts/*",
-			"resources/sprites/*"
+			"resources/sprites/*",
+			"resources/spritesheets/*.plist"
+		],
+		"sprites": [
+			"resources/spritesheets/*.png"
 		]
 	},
 	"repository": "https://github.com/gdlocalisation",

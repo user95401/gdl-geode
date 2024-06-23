@@ -13,6 +13,11 @@
 #endif
 
 namespace gdl {
+    enum Language {
+        GDL_ENGLISH,
+        GDL_RUSSIAN
+    };
+
 #if defined(GEODE_IS_WINDOWS64)
 
     /// @brief Patch a normal C string
@@ -30,4 +35,12 @@ namespace gdl {
 #elif defined(GEODE_IS_ANDROID32)
     [[nodiscard]] bool patchString(const uintptr_t srcAddr, const char* str);
 #endif
+    Language getCurrentLanguage();
+
+    const char* getLanguageString(Language language);
+    const char* getLanguageCodename(Language language);
+
+    void addTranslation(const char* id, const char* translatedStr, Language language);
 } // namespace gdl
+
+const char* operator""_gdl(const char* str, size_t size);

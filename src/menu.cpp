@@ -12,41 +12,27 @@ class $modify(GDLOptionsLayer, OptionsLayer) {
         this->hideLayer(false);
     }
 
-    // virtual void customSetup() {
-    //     OptionsLayer::customSetup();
+    virtual void customSetup() {
+        OptionsLayer::customSetup();
 
-    //     auto buttonsMenu = (CCMenu*)this->m_mainLayer->getChildren()->objectAtIndex(4);
-    //     if(!buttonsMenu)
-    //         return;
+        auto buttonsMenu = (CCMenu*)this->m_mainLayer->getChildren()->objectAtIndex(4);
+        if(!buttonsMenu)
+            return;
 
-    //     log::info("{}", buttonsMenu->getChildrenCount());
+        auto languageBtn = CCMenuItemSpriteExtra::create(ButtonSprite::create("language"_gdl, "goldFont.fnt", "GJ_button_01.png"), this, SEL_MenuHandler(&GDLOptionsLayer::onLanguage));
+        languageBtn->setPosition(buttonsMenu->getContentWidth() / 2, -115);
+        buttonsMenu->addChild(languageBtn);
+    }
 
-    //     // auto accountBtn = (CCMenuItemSpriteExtra*)buttonsMenu->getChildren()->objectAtIndex(0);
-    //     // auto tutorialBtn = (CCMenuItemSpriteExtra*)buttonsMenu->getChildren()->objectAtIndex(1);
-    //     // auto rateBtn = (CCMenuItemSpriteExtra*)buttonsMenu->getChildren()->objectAtIndex(4);
-    //     // auto soundtracksBtn = (CCMenuItemSpriteExtra*)buttonsMenu->getChildren()->objectAtIndex(5);
-    //     // auto helpBtn = (CCMenuItemSpriteExtra*)buttonsMenu->getChildren()->objectAtIndex(6);
+    virtual void layerHidden() {
+        if(m_clickedLanguage) {
+            auto languageLayer = LanguageLayer::create();
+            this->getParent()->addChild(languageLayer);
+            languageLayer->setZOrder(100);
+            languageLayer->showLayer(false);
+            m_clickedLanguage = false;
+        }
 
-    //     // accountBtn->setPositionX(rateBtn->getPositionX());
-    //     // accountBtn->setContentWidth(rateBtn->getContentWidth());
-
-    //     // tutorialBtn->setPositionX(helpBtn->getPositionX());
-    //     // tutorialBtn->setContentWidth(helpBtn->getContentWidth());
-
-    //     auto languageBtn = CCMenuItemSpriteExtra::create(ButtonSprite::create("Language", "goldFont.fnt", "GJ_button_01.png"), this, SEL_MenuHandler(&GDLOptionsLayer::onLanguage));
-    //     languageBtn->setPosition(0, -130);
-    //     buttonsMenu->addChild(languageBtn);
-    // }
-
-    // virtual void layerHidden() {
-    //     if(m_clickedLanguage) {
-    //         auto languageLayer = LanguageLayer::create();
-    //         this->getParent()->addChild(languageLayer);
-    //         languageLayer->setZOrder(100);
-    //         languageLayer->showLayer(false);
-    //         m_clickedLanguage = false;
-    //     }
-
-    //     OptionsLayer::layerHidden();
-    // }
+        OptionsLayer::layerHidden();
+    }
 };
