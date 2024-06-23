@@ -27,12 +27,12 @@ class $modify(GDLOptionsLayer, OptionsLayer) {
     }
 
     virtual void layerHidden() {
-        if(m_clickedLanguage) {
+        if(m_fields->m_clickedLanguage) {
             auto languageLayer = LanguageLayer::create();
             this->getParent()->addChild(languageLayer);
             languageLayer->setZOrder(100);
             languageLayer->showLayer(false);
-            m_clickedLanguage = false;
+            m_fields->m_clickedLanguage = false;
         }
 
         OptionsLayer::layerHidden();

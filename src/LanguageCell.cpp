@@ -4,7 +4,7 @@
 LanguageCell::LanguageCell(gdl::Language lang) : geode::GenericListCell(gdl::getLanguageCodename(lang),  {358, 40}) {
     this->setID(fmt::format("lang-{}", gdl::getLanguageCodename(lang)));
     
-    auto displayName = CCLabelBMFont::create(gdl::getLanguageString(lang), "bigFont.fnt");
+    auto displayName = CCLabelBMFont::create(gdl::getLanguageName(lang), "bigFont.fnt");
     displayName->setPosition(10, this->m_height / 2);
     displayName->setScale(0.8f);
     displayName->setAnchorPoint({0.0f, 0.5f});

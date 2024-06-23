@@ -1,6 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <patches.hpp>
-#include <stringPatch.hpp>
+#include "api.hpp"
 
 using namespace geode::prelude;
 
@@ -34,13 +34,8 @@ $execute {
     //     }, InvokeBindFilter(nullptr, "reload"_spr));
     // }
 #endif
-
-    patches::fixCyrillicP();
     patches::patchStrings();
 
-    gdl::addTranslation("language", "Language", gdl::GDL_ENGLISH);
-    gdl::addTranslation("language", "Язык", gdl::GDL_RUSSIAN);
-
-    gdl::addTranslation("apply", "Apply", gdl::GDL_ENGLISH);
-    gdl::addTranslation("apply", "Применить", gdl::GDL_RUSSIAN);
+    gdl::addTranslations("language", {{gdl::GDL_ENGLISH, "Language"}, {gdl::GDL_RUSSIAN, "Язык"}});
+    gdl::addTranslations("apply", {{gdl::GDL_ENGLISH, "Apply"}, {gdl::GDL_RUSSIAN, "Применить"}});
 };

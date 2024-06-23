@@ -9,7 +9,7 @@
 
 using namespace geode::prelude;
 
-#include "../api/stringPatch.hpp"
+#include "api.hpp"
 
 void patches::fixCyrillicP() {
     // this fixes a bug when comments with cyrillic Р (and other letters containing byte 0xA0) are replaced with something by robtop and break the unicode sequence.
@@ -54,6 +54,8 @@ void patches::patchStrings() {
             }
         }
     }
+
+    patches::fixCyrillicP();
 
     auto languageID = gdl::getCurrentLanguage();
 

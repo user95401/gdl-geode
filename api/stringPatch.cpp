@@ -119,8 +119,6 @@ class PageManager {
 #endif
 
 namespace gdl {
-    std::unordered_map<const char*, std::unordered_map<Language, const char*>> apiStrings;
-
 #if defined(GEODE_IS_WINDOWS64)
     bool patchCString(uintptr_t srcAddr, const char* str) {
         ZydisDisassembledInstruction instruction;
@@ -551,33 +549,4 @@ namespace gdl {
         return ret;
     }
 #endif
-    Language getCurrentLanguage() {
-        return (Language)Mod::get()->getSavedValue<int>("language-id");
-    }
-
-    const char* getLanguageString(Language language) {
-        switch(language) {
-            case GDL_ENGLISH: return "English";
-            case GDL_RUSSIAN: return "Русский";
-        }
-    }
-
-    const char* getLanguageCodename(Language language) {
-        switch(language) {
-            case GDL_ENGLISH: return "en";
-            case GDL_RUSSIAN: return "ru";
-        }
-    }
-
-    void addTranslation(const char* id, const char* translatedStr, Language language) {
-        apiStrings[id][language] = translatedStr;
-    }
 } // namespace gdl
-
-const char* operator""_gdl(const char* str, size_t size) {
-    if(gdl::apiStrings.contains(str) && gdl::apiStrings[str].contains(gdl::getCurrentLanguage())) {
-        return gdl::apiStrings[str][gdl::getCurrentLanguage()];
-    }
-
-    return str;
-}

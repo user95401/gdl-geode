@@ -1,6 +1,6 @@
 #pragma once
 #include <Geode/Geode.hpp>
-#include <stringPatch.hpp>
+#include "api.hpp"
 
 using namespace geode::prelude;
 

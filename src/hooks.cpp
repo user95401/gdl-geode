@@ -8,7 +8,7 @@
 #include <utf8.h>
 #include <regex>
 #include <filesystem>
-#include <stringPatch.hpp>
+#include "api.hpp"
 
 #ifdef GEODE_IS_ANDROID
     #define __isascii isascii
