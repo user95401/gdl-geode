@@ -5,10 +5,12 @@
 using namespace geode::prelude;
 
 class $modify(GDLOptionsLayer, OptionsLayer) {
-    bool m_clickedLanguage = false;
+    struct Fields {
+        bool m_clickedLanguage = false;
+    };
 
     void onLanguage(CCObject* sender) {
-        m_clickedLanguage = true;
+        m_fields->m_clickedLanguage = true;
         this->hideLayer(false);
     }
 
