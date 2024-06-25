@@ -2,11 +2,13 @@
 #include "Geode/modify/MultilineBitmapFont.hpp"
 #include "Geode/modify/CCLabelBMFont.hpp"
 #include "Geode/modify/CCTextureCache.hpp"
+#include "Geode/modify/LoadingLayer.hpp"
 
 #include "utils.hpp"
 #include <utf8.h>
 #include <regex>
 #include <filesystem>
+#include "api.hpp"
 
 #ifdef GEODE_IS_ANDROID
     #define __isascii isascii
@@ -158,6 +160,22 @@ class $modify(CCLabelBMFont) {
         }
 
         return CCLabelBMFont::initWithString(str, font, a3, a4, a5);
+    }
+};
+
+class $modify(LoadingLayer){
+    void loadAssets(){
+        if(this->m_loadStep == 11 && gdl::getCurrentLanguage() != gdl::GDL_ENGLISH){
+            auto plist = Mod::get()->getResourcesDir() / fmt::format("GDL_TranslatedFrames-{}.plist", gdl::getLanguageCodename(gdl::getCurrentLanguage()));
+            auto png = Mod::get()->getResourcesDir() / fmt::format("GDL_TranslatedFrames-{}.png", gdl::getLanguageCodename(gdl::getCurrentLanguage()));
+
+            CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile(gdlutils::pathWithQuality(plist).c_str());
+            CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile(gdlutils::pathWithQuality(plist).c_str(),
+                CCTextureCache::sharedTextureCache()->addImage(gdlutils::pathWithQuality(png).c_str(), false)
+            );
+        }
+
+        LoadingLayer::loadAssets();
     }
 };
 
