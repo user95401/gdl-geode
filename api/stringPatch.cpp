@@ -137,9 +137,6 @@ namespace gdl {
             return false;
         }
 
-        static std::vector<const char*> strings;
-        strings.push_back(_strdup(str)); // now we actually own the string
-
         // mov <original reg>, <string address>
         ZydisEncoderRequest req;
         memset(&req, 0, sizeof(req));
@@ -210,11 +207,14 @@ namespace gdl {
         //   2. place bytes for ^ into a free page
         //   3. place `call` in place of original instructions (fill with nops all instructions that are `movups`, `movaps`, `movzx` (dont matter the operand bc it takes `eax`), `mov`
         //      that take `[<any reg> + ...]` as the first operand). there can be any register because it could do `mov rcx, rax` and then `mov [rcx+...], ...`
-        // 3. shitty cases: 0x43A9A5 (fucked up order); 0x43A9A5, 0x43AA14 (3 byte lea ecx)
+        // 3. shitty cases: 0x43A9A5, 0x43AA23 (fucked up order); 0x43A9A5, 0x43AA14 (3 byte lea ecx), 0x269D21, 3CB537 (correctly identified), 0x3CB297 (wtf)
         // 4. heck you compiler optimizations!!!
         // clang-format on
 
         // =========================================
+
+        log::error("TODO PATCH ASSIGN AS LATE AS POSSIBLE"); // maybe in <16 only?
+        return false;
 
         auto str = _strdup(str_);
         static std::vector<const char*> strings;
@@ -226,7 +226,7 @@ namespace gdl {
         ZydisDisassembledInstruction disasmInsn;
         auto stringLen = strlen(str);
         auto stringLenFull = stringLen + 1; // with \0
-        auto capacity = std::max(stringLenFull, 0x10ull); // use bigger capacity to ensure that smaller strings (<= 15 bytes in length) work properly
+        auto capacity = std::max(stringLenFull, 0x10ull); // use bigger capacity to ensure that smaller strings (<= 15 bytes in length) work properly (if new string is < 16 chars and the orig is >= 16 chars)
         auto allocatingSize = capacity + 1;
 
         log::debug("string len {}, full {}, capacity {}, allocatingSize {}", stringLen, stringLenFull, capacity, allocatingSize);

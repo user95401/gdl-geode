@@ -26,17 +26,21 @@ void patchStrings() {
         log::warn("Failed to patch the Рррр fix ({}), be aware that CommentCell with cyrillic comments may crash!", res.error());
 
 #ifdef GEODE_IS_WINDOWS64
-    bool res3;
-    res3 = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
-    log::debug("{}", res3);
-    res3 = gdl::patchCString(base::get() + 0x350598, "Привет, мир 2!");
-    log::debug("{}", res3);
-    res3 = gdl::patchCString(base::get() + 0x3505F1, "Привет, мир 3!");
-    log::debug("{}", res3);
+    // bool res3;
+    // res3 = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
+    // log::debug("{}", res3);
+    // res3 = gdl::patchCString(base::get() + 0x350598, "Привет, мир 2!");
+    // log::debug("{}", res3);
+    // res3 = gdl::patchCString(base::get() + 0x3505F1, "Привет, мир 3!");
+    // log::debug("{}", res3);
+
+    // bool res2;
+    // res2 = gdl::patchStdStringRel("hi", 0x31561F, 0x31562F, 0x315638, {0x315641, 0x315648, 0x31564B, 0x315652, 0x315656, 0x31565C, 0x31565F, 0x315666, 0x31566A});
+    // // res2 = gdl::patchStdStringRel("This is a very very long string1!This is a very very long string2!This is a very very long string3!This is a very very long string4!This is a very very long string5!", 0x31561F, 0x31562F, 0x315638, {0x315641, 0x315648, 0x31564B, 0x315652, 0x315656, 0x31565C, 0x31565F, 0x315666, 0x31566A});
+    // log::debug("res {}", res2);
 
     bool res2;
-    res2 = gdl::patchStdStringRel("hi", 0x31561F, 0x31562F, 0x315638, {0x315641, 0x315648, 0x31564B, 0x315652, 0x315656, 0x31565C, 0x31565F, 0x315666, 0x31566A});
-    // res2 = gdl::patchStdStringRel("This is a very very long string1!This is a very very long string2!This is a very very long string3!This is a very very long string4!This is a very very long string5!", 0x31561F, 0x31562F, 0x315638, {0x315641, 0x315648, 0x31564B, 0x315652, 0x315656, 0x31565C, 0x31565F, 0x315666, 0x31566A});
+    res2 = gdl::patchStdString2("Hello world! This is a long enough string!", {{base::get() + 0x31561F, 0x4F}});
     log::debug("res {}", res2);
 #endif
 

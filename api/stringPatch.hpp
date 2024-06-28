@@ -14,10 +14,9 @@
 
 namespace gdl {
 #if defined(GEODE_IS_WINDOWS64)
-
     /// @brief Patch a normal C string
     /// @param absAddr The ABSOLUTE address of the `lea` instruction
-    /// @param str A string. Note that it will be duplicated so the orignal string can be freed
+    /// @param str A string. Note that it must have static lifetime!
     /// @return Whether the patch was successful
     [[nodiscard]] bool patchCString(uintptr_t srcAddr, const char* str);
 
@@ -27,6 +26,13 @@ namespace gdl {
     // same as patchStdString but all addresses are relative to gd base (it will be added to all addresses)
     [[nodiscard]] bool patchStdStringRel(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns);
 
+    struct PatchBlock {
+        uintptr_t start;
+        unsigned int len;
+    };
+
+    // all addrs are absolute
+    [[nodiscard]] bool patchStdString2(const char* str, const std::vector<PatchBlock>& blocks);
 #elif defined(GEODE_IS_ANDROID32)
     [[nodiscard]] bool patchString(const uintptr_t srcAddr, const char* str);
 #endif
