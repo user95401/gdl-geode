@@ -1,50 +1,43 @@
 #include "LanguageCell.hpp"
+#include "LanguageLayer.hpp"
 
-LanguageCell::LanguageCell(LanguageID lang) : geode::GenericListCell(languages[lang].codename,  {358, 40}) {
-    this->setID(fmt::format("lang-{}", languages[lang].codename));
+LanguageCell::LanguageCell(gdl::Language lang) : geode::GenericListCell(gdl::getLanguageCodename(lang),  {358, 40}) {
+    this->setID(fmt::format("lang-{}", gdl::getLanguageCodename(lang)));
     
-    auto displayName = CCLabelBMFont::create(languages[lang].displayName, "bigFont.fnt");
+    auto displayName = CCLabelBMFont::create(gdl::getLanguageName(lang), "bigFont.fnt");
     displayName->setPosition(10, this->m_height / 2);
     displayName->setScale(0.8f);
     displayName->setAnchorPoint({0.0f, 0.5f});
 
     this->m_mainLayer->addChild(displayName);
 
-    auto checkbox = CCMenuItemToggler::create(
-        CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png"), 
-        CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png"),
-        this,
-        SEL_MenuHandler(&LanguageCell::checkboxClicked)
-    );
+    auto toggle = geode::cocos::CCMenuItemExt::createTogglerWithStandardSprites(1.0f, [this, lang](CCMenuItemToggler* sender) {
+        if(sender->isToggled()) {
+            sender->setClickable(false);
+            return;
+        }
 
-    auto menu = CCMenu::createWithItem(checkbox);
+        auto listView = (BoomListView*)CCScene::get()->getChildByIDRecursive("language-list");
+        auto arr = listView->m_entries;
+
+        CCObject* obj;
+        CCARRAY_FOREACH(arr, obj) {
+            auto cell = (LanguageCell*)obj;
+            auto cellCheckbox = (CCMenuItemToggler*)cell->getChildByIDRecursive("lang-checkbox");
+            bool shouldOff = cell->getID() != sender->getID();
+
+            cellCheckbox->toggle(!shouldOff);
+            cellCheckbox->setClickable(shouldOff);
+        }
+
+        LanguageLayer::setSelectedLang(lang);
+    });
+
+    auto menu = CCMenu::createWithItem(toggle);
     
-    checkbox->setPosition(menu->convertToNodeSpace({this->m_width - (checkbox->getContentWidth() / 2) - 10, m_height / 2}));
-    checkbox->setID("lang-checkbox");
+    toggle->setPosition(menu->convertToNodeSpace({this->m_width - (toggle->getContentWidth() / 2) - 10, m_height / 2}));
+    toggle->setID("lang-checkbox");
+    
+    toggle->toggle(Mod::get()->getSavedValue<int>("language-id") == lang);
     this->m_mainLayer->addChild(menu);
-}
-
-void LanguageCell::checkboxClicked(CCObject* sender) {
-    log::info("Changed lang");
-    auto checkbox = (CCMenuItemToggler*)sender;
-
-    if(!checkbox->isEnabled()) {
-        checkbox->setEnabled(true);
-        return;
-    }
-
-    auto arr = this->m_tableView->m_cellArray;
-    if(!arr) {
-        log::info("fck urself");
-        return;
-    }
-
-    CCObject* obj;
-    // CCARRAY_FOREACH(arr, obj) {
-    //     auto cell = (geode::GenericListCell*)obj;
-    //     if(cell->getID() != checkbox->getID()) {
-    //         auto cellCheckbox = (CCMenuItemToggler*)cell->getChildByIDRecursive("lang-checkbox");
-    //         cellCheckbox->setEnabled(false);
-    //     }
-    // }
 }

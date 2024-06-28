@@ -1,6 +1,5 @@
 #pragma once
 #include <Geode/Geode.hpp>
-#include <initializer_list>
 
 #ifdef GEODE_IS_WINDOWS
     #ifdef GDLAPI_EXPORTING
@@ -18,13 +17,13 @@ namespace gdl {
     /// @param absAddr The ABSOLUTE address of the `lea` instruction
     /// @param str A string. Note that it must have static lifetime!
     /// @return Whether the patch was successful
-    [[nodiscard]] bool patchCString(uintptr_t srcAddr, const char* str);
+    [[nodiscard]] GDLAPI_DLL bool patchCString(uintptr_t srcAddr, const char* str);
 
     // All addresses are absolute!
-    [[nodiscard]] bool patchStdString(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns);
+    [[nodiscard]] GDLAPI_DLL bool patchStdString(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns);
     
     // same as patchStdString but all addresses are relative to gd base (it will be added to all addresses)
-    [[nodiscard]] bool patchStdStringRel(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns);
+    [[nodiscard]] GDLAPI_DLL bool patchStdStringRel(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns);
 
     struct PatchBlock {
         uintptr_t start;
@@ -34,6 +33,6 @@ namespace gdl {
     // all addrs are absolute
     [[nodiscard]] bool patchStdString2(const char* str, const std::vector<PatchBlock>& blocks);
 #elif defined(GEODE_IS_ANDROID32)
-    [[nodiscard]] bool patchString(const uintptr_t srcAddr, const char* str);
+    [[nodiscard]] GDLAPI_DLL bool patchString(const uintptr_t srcAddr, const char* str);
 #endif
 } // namespace gdl
