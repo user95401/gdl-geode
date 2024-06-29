@@ -22,7 +22,7 @@ class $modify(GDLOptionsLayer, OptionsLayer) {
             return;
 
         auto languageBtn = CCMenuItemSpriteExtra::create(ButtonSprite::create("language"_gdl, "goldFont.fnt", "GJ_button_01.png"), this, SEL_MenuHandler(&GDLOptionsLayer::onLanguage));
-        languageBtn->setPosition(buttonsMenu->getContentWidth() / 2, -115);
+        languageBtn->setPosition(0, -115);
         buttonsMenu->addChild(languageBtn);
     }
 

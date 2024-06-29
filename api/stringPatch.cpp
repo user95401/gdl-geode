@@ -137,9 +137,6 @@ namespace gdl {
             return false;
         }
 
-        static std::vector<const char*> strings;
-        strings.push_back(_strdup(str)); // now we actually own the string
-
         // mov <original reg>, <string address>
         ZydisEncoderRequest req;
         memset(&req, 0, sizeof(req));
@@ -152,7 +149,7 @@ namespace gdl {
         req.operands[0].reg.value = instruction.operands[0].reg.value;
 
         req.operands[1].type = ZYDIS_OPERAND_TYPE_IMMEDIATE;
-        req.operands[1].imm.u = (uintptr_t)strings.back();
+        req.operands[1].imm.u = (uintptr_t)str;
 
         ZyanU8 encoded_instruction[ZYDIS_MAX_INSTRUCTION_LENGTH];
         ZyanUSize encoded_length = sizeof(encoded_instruction);
@@ -191,6 +188,215 @@ namespace gdl {
         return patchStdString(str, base::get() + allocSizeInsn, base::get() + sizeInsn, base::get() + capacityInsn, assignInsns);
     }
 
+    bool patchStdString2(const char* str, const std::vector<PatchBlock>& blocks, uintptr_t bufAssignInsn) {
+        log::debug("===================================================");
+
+        if (blocks.size() == 0 || blocks[0].len < 5) {
+            log::error("invalid block data");
+            return false;
+        }
+
+        // disasm the assign insn
+        ZydisDisassembledInstruction instruction;
+        if (ZYAN_FAILED(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, bufAssignInsn, (void*)bufAssignInsn, ZYDIS_MAX_INSTRUCTION_LENGTH, &instruction))) {
+            log::error("failed to disassemble the instruction at 0x{:X}", bufAssignInsn);
+            return false;
+        }
+
+        log::debug("{}", instruction.text);
+
+        if (instruction.operands[0].type != ZYDIS_OPERAND_TYPE_MEMORY) {
+            log::error("not mem op");
+            return false;
+        }
+
+        auto size = strlen(str);
+        auto capacity = std::max(0x10ull, size + 1);
+
+        // jmp:
+        //   mov rcx, <cap>
+        //   call sub_140039BE0
+        //   <buf assign insn>
+        //   mov [<buf mem op> + 16], <size>
+        //   mov [<buf mem op> + 24], <cap>
+        //   mov r8, <size+1>
+        //   mov rdx, <str>
+        //   mov rcx, rax
+        //   call memcpy
+        //   jmp <blocks[0].end> ; aka start + len
+
+        // encode size insn
+        ZydisEncoderRequest req;
+
+        memset(&req, 0, sizeof(req));
+        req.mnemonic = ZYDIS_MNEMONIC_MOV;
+        req.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
+        req.operand_count = 2;
+
+        req.operands[0].type = ZYDIS_OPERAND_TYPE_MEMORY;
+        req.operands[0].mem.base = instruction.operands[0].mem.base;
+        req.operands[0].mem.displacement = instruction.operands[0].mem.disp.value;
+        req.operands[0].mem.size = 8;
+
+        req.operands[1].type = ZYDIS_OPERAND_TYPE_REGISTER;
+        req.operands[1].reg.value = ZYDIS_REGISTER_RAX;
+
+        ZyanU8 encoded_instruction0[ZYDIS_MAX_INSTRUCTION_LENGTH];
+        ZyanUSize encoded_length0 = sizeof(encoded_instruction0);
+
+        if (ZYAN_FAILED(ZydisEncoderEncodeInstruction(&req, encoded_instruction0, &encoded_length0))) {
+            log::error("Failed to encode instruction [0]!");
+            return false;
+        }
+
+        {
+            std::string zvzv = "";
+            for (auto i = 0; i < encoded_length0; i++) {
+                zvzv += std::format("{:02X} ", encoded_instruction0[i]);
+            }
+            log::debug("{}", zvzv);
+        }
+
+        memset(&req, 0, sizeof(req));
+        req.mnemonic = ZYDIS_MNEMONIC_MOV;
+        req.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
+        req.operand_count = 2;
+
+        req.operands[0].type = ZYDIS_OPERAND_TYPE_MEMORY;
+        req.operands[0].mem.base = instruction.operands[0].mem.base;
+        req.operands[0].mem.displacement = instruction.operands[0].mem.disp.value + 16;
+        req.operands[0].mem.size = 8;
+
+        req.operands[1].type = ZYDIS_OPERAND_TYPE_IMMEDIATE;
+        req.operands[1].imm.u = size;
+
+        ZyanU8 encoded_instruction1[ZYDIS_MAX_INSTRUCTION_LENGTH];
+        ZyanUSize encoded_length1 = sizeof(encoded_instruction1);
+
+        if (ZYAN_FAILED(ZydisEncoderEncodeInstruction(&req, encoded_instruction1, &encoded_length1))) {
+            log::error("Failed to encode instruction [1]!");
+            return false;
+        }
+
+        {
+            std::string zvzv = "";
+            for (auto i = 0; i < encoded_length1; i++) {
+                zvzv += std::format("{:02X} ", encoded_instruction1[i]);
+            }
+            log::debug("{}", zvzv);
+        }
+
+        memset(&req, 0, sizeof(req));
+        req.mnemonic = ZYDIS_MNEMONIC_MOV;
+        req.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
+        req.operand_count = 2;
+
+        req.operands[0].type = ZYDIS_OPERAND_TYPE_MEMORY;
+        req.operands[0].mem.base = instruction.operands[0].mem.base;
+        req.operands[0].mem.displacement = instruction.operands[0].mem.disp.value + 24;
+        req.operands[0].mem.size = 8;
+
+        req.operands[1].type = ZYDIS_OPERAND_TYPE_IMMEDIATE;
+        req.operands[1].imm.u = capacity;
+
+        ZyanU8 encoded_instruction2[ZYDIS_MAX_INSTRUCTION_LENGTH];
+        ZyanUSize encoded_length2 = sizeof(encoded_instruction2);
+
+        if (ZYAN_FAILED(ZydisEncoderEncodeInstruction(&req, encoded_instruction2, &encoded_length2))) {
+            log::error("Failed to encode instruction [2]!");
+            return false;
+        }
+
+        {
+            std::string zvzv = "";
+            for (auto i = 0; i < encoded_length2; i++) {
+                zvzv += std::format("{:02X} ", encoded_instruction2[i]);
+            }
+            log::debug("{}", zvzv);
+        }
+
+        // clang-format off
+        auto tramp = PageManager::get().getMemoryForSize(0x2a + encoded_length0 + encoded_length1 + encoded_length2);
+        auto offset = 0;
+
+        tramp[offset] = 0x48; tramp[offset+1] = 0xc7; tramp[offset+2] = 0xc1;
+        *(uint32_t*)(tramp + offset + 3) = capacity;
+        offset += 7;
+
+        tramp[offset] = 0xe8;
+        auto relAddr = (uint64_t)(base::get() + 0x39BE0) - ((uint64_t)tramp + offset + 5);
+        *(int32_t*)(tramp + offset + 1) = (int32_t)relAddr;
+        offset += 5;
+
+        memcpy(tramp + offset, encoded_instruction0, encoded_length0);
+        offset += encoded_length0;
+
+        memcpy(tramp + offset, encoded_instruction1, encoded_length1);
+        offset += encoded_length1;
+
+        memcpy(tramp + offset, encoded_instruction2, encoded_length2);
+        offset += encoded_length2;
+
+        tramp[offset] = 0x49; tramp[offset+1] = 0xc7; tramp[offset+2] = 0xc0;
+        *(uint32_t*)(tramp + offset + 3) = size + 1;
+        offset += 7;
+
+        tramp[offset] = 0x48; tramp[offset+1] = 0xba;
+        *(uintptr_t*)(tramp + offset + 2) = (uintptr_t)str;
+        offset += 10;
+
+        tramp[offset] = 0x48; tramp[offset+1] = 0x89; tramp[offset+2] = 0xc1;
+        offset += 3;
+
+        tramp[offset] = 0xe8;
+        relAddr = (uint64_t)(base::get() + 0x4A49F0) - ((uint64_t)tramp + offset + 5);
+        *(int32_t*)(tramp + offset + 1) = (int32_t)relAddr;
+        offset += 5;
+
+        tramp[offset] = 0xe9;
+        relAddr = (uint64_t)(blocks[0].start + blocks[0].len) - ((uint64_t)tramp + offset + 5);
+        *(int32_t*)(tramp + offset + 1) = (int32_t)relAddr;
+        offset += 5;
+
+        // clang-format on
+
+        {
+            std::string zvzv = "";
+            for (auto i = 0; i < offset; i++) {
+                zvzv += std::format("{:02X} ", tramp[i]);
+            }
+            log::debug("{}", zvzv);
+        }
+
+        uint8_t patch[] = {0xe9, 0x00, 0x00, 0x00, 0x00}; // jmp <tramp>
+        relAddr = (uint64_t)tramp - ((uint64_t)blocks[0].start + 5);
+        *(int32_t*)(patch + 1) = (int32_t)relAddr;
+
+        if (auto p = Mod::get()->patch((void*)blocks[0].start, ByteVector(patch, patch + sizeof(patch))); p.isErr()) {
+            log::error("patch error {}", p.error());
+            return false;
+        }
+
+        for (auto i = 1; i < blocks.size(); i++) {
+            auto& block = blocks[i];
+            if (block.len < 5) {
+                if (auto p = Mod::get()->patch((void*)block.start, ByteVector(block.len, 0x90)); p.isErr()) {
+                    log::error("patch error {}", p.error());
+                    return false;
+                }
+            } else {
+                uint8_t patch2[] = {0xe9, 0x00, 0x00, 0x00, 0x00};
+                *(int32_t*)(patch2 + 1) = block.len - 5;
+                if (auto p = Mod::get()->patch((void*)block.start, ByteVector(patch2, patch2 + sizeof(patch2))); p.isErr()) {
+                    log::error("patch error {}", p.error());
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     bool patchStdString(const char* str_, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns) {
         // clang-format off
         // 1. patch the alloc_data function
@@ -210,11 +416,14 @@ namespace gdl {
         //   2. place bytes for ^ into a free page
         //   3. place `call` in place of original instructions (fill with nops all instructions that are `movups`, `movaps`, `movzx` (dont matter the operand bc it takes `eax`), `mov`
         //      that take `[<any reg> + ...]` as the first operand). there can be any register because it could do `mov rcx, rax` and then `mov [rcx+...], ...`
-        // 3. shitty cases: 0x43A9A5 (fucked up order); 0x43A9A5, 0x43AA14 (3 byte lea ecx)
+        // 3. shitty cases: 0x43A9A5, 0x43AA23 (fucked up order); 0x43A9A5, 0x43AA14 (3 byte lea ecx), 0x269D21, 3CB537 (correctly identified), 0x3CB297 (wtf)
         // 4. heck you compiler optimizations!!!
         // clang-format on
 
         // =========================================
+
+        log::error("TODO PATCH ASSIGN AS LATE AS POSSIBLE"); // maybe in <16 only?
+        return false;
 
         auto str = _strdup(str_);
         static std::vector<const char*> strings;
@@ -226,7 +435,9 @@ namespace gdl {
         ZydisDisassembledInstruction disasmInsn;
         auto stringLen = strlen(str);
         auto stringLenFull = stringLen + 1; // with \0
-        auto capacity = std::max(stringLenFull, 0x10ull); // use bigger capacity to ensure that smaller strings (<= 15 bytes in length) work properly
+        auto capacity =
+            std::max(stringLenFull,
+                     0x10ull); // use bigger capacity to ensure that smaller strings (<= 15 bytes in length) work properly (if new string is < 16 chars and the orig is >= 16 chars)
         auto allocatingSize = capacity + 1;
 
         log::debug("string len {}, full {}, capacity {}, allocatingSize {}", stringLen, stringLenFull, capacity, allocatingSize);

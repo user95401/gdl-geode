@@ -20,25 +20,9 @@ void patches::fixCyrillicP() {
 
     if (res.isErr())
         log::warn("Failed to patch the Рррр fix ({}), be aware that CommentCell with cyrillic comments may crash!", res.error());
-
 }
 
 void patches::patchStrings() {
-// #ifdef GEODE_IS_WINDOWS64
-//     bool res3;
-//     res3 = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
-//     log::debug("{}", res3);
-//     res3 = gdl::patchCString(base::get() + 0x350598, "Привет, мир 2!");
-//     log::debug("{}", res3);
-//     res3 = gdl::patchCString(base::get() + 0x3505F1, "Привет, мир 3!");
-//     log::debug("{}", res3);
-
-//     bool res2;
-//     res2 = gdl::patchStdStringRel("hi", 0x31561F, 0x31562F, 0x315638, {0x315641, 0x315648, 0x31564B, 0x315652, 0x315656, 0x31565C, 0x31565F, 0x315666, 0x31566A});
-//     // res2 = gdl::patchStdStringRel("This is a very very long string1!This is a very very long string2!This is a very very long string3!This is a very very long string4!This is a very very long string5!", 0x31561F, 0x31562F, 0x315638, {0x315641, 0x315648, 0x31564B, 0x315652, 0x315656, 0x31565C, 0x31565F, 0x315666, 0x31566A});
-//     log::debug("res {}", res2);
-// #endif
-
     static std::vector<std::string> strings;
 
     for (auto p : Mod::get()->getPatches()) {
@@ -52,9 +36,30 @@ void patches::patchStrings() {
 
     patches::fixCyrillicP();
 
+#ifdef GEODE_IS_WINDOWS64
+//     bool res3;
+//     res3 = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
+//     log::debug("{}", res3);
+//     res3 = gdl::patchCString(base::get() + 0x350598, "Привет, мир 2!");
+//     log::debug("{}", res3);
+//     res3 = gdl::patchCString(base::get() + 0x3505F1, "Привет, мир 3!");
+//     log::debug("{}", res3);
+
+//     bool res2;
+//     res2 = gdl::patchStdStringRel("hi", 0x31561F, 0x31562F, 0x315638, {0x315641, 0x315648, 0x31564B, 0x315652, 0x315656, 0x31565C, 0x31565F, 0x315666, 0x31566A});
+//     // res2 = gdl::patchStdStringRel("This is a very very long string1!This is a very very long string2!This is a very very long string3!This is a very very long string4!This is a very very long string5!", 0x31561F, 0x31562F, 0x315638, {0x315641, 0x315648, 0x31564B, 0x315652, 0x315656, 0x31565C, 0x31565F, 0x315666, 0x31566A});
+//     log::debug("res {}", res2);
+
+    bool res2;
+    res2 = gdl::patchStdString2("Hello world! This is a long enough string!", {{base::get() + 0x31561F, 0x4F}}, base::get() + 0x31562A); // quit text
+    log::debug("res {}", res2);
+    res2 = gdl::patchStdString2("Test!", {{base::get() + 0x461B64, 0x24}}, base::get() + 0x461B76); // cancel btn in comments posting menu
+    log::debug("res {}", res2);
+#endif
+
     auto languageID = gdl::getCurrentLanguage();
 
-    if(languageID == gdl::GDL_ENGLISH) {
+    if (languageID == gdl::GDL_ENGLISH) {
         return;
     }
 
@@ -62,7 +67,7 @@ void patches::patchStrings() {
     auto locationsFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / fmt::format("{}-locations.json", languageCodename)).string());
     auto langFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / fmt::format("{}-lang.json", languageCodename)).string());
 
-    if(locationsFile == nullptr || langFile == nullptr) {
+    if (locationsFile == nullptr || langFile == nullptr) {
         return;
     }
 
@@ -70,22 +75,22 @@ void patches::patchStrings() {
     strings.reserve(langFile.size());
     
 #if defined(GEODE_IS_WINDOWS)
-    auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / fmt::format("win-{}.json", Loader::get()->getGameVersion())).string());
+    // auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / fmt::format("win-{}.json", Loader::get()->getGameVersion())).string());
 
-    for (const auto& pair : langFile.items()) {
-        if (!patchFile.contains(pair.key()))
-            continue;
+    // for (const auto& pair : langFile.items()) {
+    //     if (!patchFile.contains(pair.key()))
+    //         continue;
 
-        strings.push_back(pair.value());
+    //     strings.push_back(pair.value());
 
-        for (const auto addr : patchFile[pair.key()]) {
-            const char* str = strings[strings.size() - 1].c_str();
-            auto res = Mod::get()->patch((void*)(base::get() + (uintptr_t)addr), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4)).err();
-            if (res != std::nullopt) {
-                log::warn("Failed to patch string at 0x{:X}, error: {}", (uintptr_t)addr, res);
-            }
-        }
-    }
+    //     for (const auto addr : patchFile[pair.key()]) {
+    //         const char* str = strings[strings.size() - 1].c_str();
+    //         auto res = Mod::get()->patch((void*)(base::get() + (uintptr_t)addr), ByteVector((uint8_t*)&str, (uint8_t*)&str + 4)).err();
+    //         if (res != std::nullopt) {
+    //             log::warn("Failed to patch string at 0x{:X}, error: {}", (uintptr_t)addr, res);
+    //         }
+    //     }
+    // }
 #elif defined(GEODE_IS_ANDROID32)
     auto patchFile = gdlutils::loadJson((Mod::get()->getResourcesDir() / "android32-2.205.json").string());
 

@@ -36,6 +36,7 @@ class $modify(MultilineBitmapFont) {
     }
 
     bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool colorsDisabled) {
+        log::debug("string!!! {} {} {}", p1.size(), p1.capacity(), p1.c_str());
         m_fields->m_textScale = p2;
         m_fields->m_fontName = p0;
         m_fields->m_maxWidth = p3;
