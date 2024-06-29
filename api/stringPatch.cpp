@@ -213,20 +213,17 @@ namespace gdl {
         auto size = strlen(str);
         auto capacity = std::max(0x10ull, size + 1);
 
-        // call:
+        // jmp:
         //   mov rcx, <cap>
         //   call sub_140039BE0
-        //   add rsp, 8 ; stack pointer is less now bc we called
         //   <buf assign insn>
         //   mov [<buf mem op> + 16], <size>
         //   mov [<buf mem op> + 24], <cap>
-        //   sub rsp, 8 ; return the stack pointer
         //   mov r8, <size+1>
         //   mov rdx, <str>
         //   mov rcx, rax
         //   call memcpy
-        //   ret
-        // jmp <offset> ; to skip orig code
+        //   jmp <blocks[0].end> ; aka start + len
 
         // encode size insn
         ZydisEncoderRequest req;
@@ -290,7 +287,7 @@ namespace gdl {
         }
 
         // clang-format off
-        auto tramp = PageManager::get().getMemoryForSize(0x2e + instruction.info.length + encoded_length1 + encoded_length2);
+        auto tramp = PageManager::get().getMemoryForSize(0x2a + instruction.info.length + encoded_length1 + encoded_length2);
         auto offset = 0;
 
         tramp[offset] = 0x48; tramp[offset+1] = 0xc7; tramp[offset+2] = 0xc1;
@@ -302,9 +299,6 @@ namespace gdl {
         *(int32_t*)(tramp + offset + 1) = (int32_t)relAddr;
         offset += 5;
 
-        tramp[offset] = 0x48; tramp[offset+1] = 0x83; tramp[offset+2] = 0xc4; tramp[offset+3] = 0x08;
-        offset += 4;
-
         memcpy(tramp + offset, (void*)bufAssignInsn, instruction.info.length);
         offset += instruction.info.length;
 
@@ -313,9 +307,6 @@ namespace gdl {
 
         memcpy(tramp + offset, encoded_instruction2, encoded_length2);
         offset += encoded_length2;
-
-        tramp[offset] = 0x48; tramp[offset+1] = 0x83; tramp[offset+2] = 0xec; tramp[offset+3] = 0x08;
-        offset += 4;
 
         tramp[offset] = 0x49; tramp[offset+1] = 0xc7; tramp[offset+2] = 0xc0;
         *(uint32_t*)(tramp + offset + 3) = size + 1;
@@ -333,7 +324,10 @@ namespace gdl {
         *(int32_t*)(tramp + offset + 1) = (int32_t)relAddr;
         offset += 5;
 
-        tramp[offset] = 0xc3;
+        tramp[offset] = 0xe9;
+        relAddr = (uint64_t)(blocks[0].start + blocks[0].len) - ((uint64_t)tramp + offset + 5);
+        *(int32_t*)(tramp + offset + 1) = (int32_t)relAddr;
+        
         // clang-format on
 
         {
@@ -344,12 +338,9 @@ namespace gdl {
             log::debug("{}", zvzv);
         }
 
-        uint8_t patch[] = {0xe8, 0x00, 0x00, 0x00, 0x00, 0xe9, 0x00, 0x00, 0x00, 0x00}; // call, jmp
-
+        uint8_t patch[] = {0xe9, 0x00, 0x00, 0x00, 0x00}; // jmp <tramp>
         relAddr = (uint64_t)tramp - ((uint64_t)blocks[0].start + 5);
         *(int32_t*)(patch + 1) = (int32_t)relAddr;
-
-        *(int32_t*)(patch + 6) = blocks[0].len - 5 - 5;
 
         if (auto p = Mod::get()->patch((void*)blocks[0].start, ByteVector(patch, patch + sizeof(patch))); p.isErr()) {
             log::error("patch error {}", p.error());
@@ -357,11 +348,19 @@ namespace gdl {
         }
 
         for (auto i = 1; i < blocks.size(); i++) {
-            uint8_t patch2[] = {0xe9, 0x00, 0x00, 0x00, 0x00};
-            *(int32_t*)(patch2 + 1) = blocks[i].len - 5;
-            if (auto p = Mod::get()->patch((void*)blocks[i].start, ByteVector(patch2, patch2 + sizeof(patch2))); p.isErr()) {
-                log::error("patch error {}", p.error());
-                return false;
+            auto& block = blocks[i];
+            if (block.len < 5) {
+                if (auto p = Mod::get()->patch((void*)block.start, ByteVector(block.len, 0x90)); p.isErr()) {
+                    log::error("patch error {}", p.error());
+                    return false;
+                }
+            } else {
+                uint8_t patch2[] = {0xe9, 0x00, 0x00, 0x00, 0x00};
+                *(int32_t*)(patch2 + 1) = block.len - 5;
+                if (auto p = Mod::get()->patch((void*)block.start, ByteVector(patch2, patch2 + sizeof(patch2))); p.isErr()) {
+                    log::error("patch error {}", p.error());
+                    return false;
+                }
             }
         }
 
