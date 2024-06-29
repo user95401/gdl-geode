@@ -28,6 +28,19 @@ void patches::fixCyrillicP() {
 }
 
 void patches::patchStrings() {
+    static std::vector<std::string> strings;
+
+    for (auto p : Mod::get()->getPatches()) {
+        if (p->isEnabled()) {
+            auto res = p->disable().err();
+            if (res != std::nullopt) {
+                log::warn("Failed to disable patch at {}, error: {}", p->getAddress() - base::get(), res);
+            }
+        }
+    }
+
+    patches::fixCyrillicP();
+
 #ifdef GEODE_IS_WINDOWS64
 //     bool res3;
 //     res3 = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
@@ -43,22 +56,9 @@ void patches::patchStrings() {
 //     log::debug("res {}", res2);
 
     bool res2;
-    res2 = gdl::patchStdString2("Hello world! This is a long enough string!", {{base::get() + 0x31561F, 0x4F}});
+    res2 = gdl::patchStdString2("Hello world! This is a long enough string!", {{base::get() + 0x31561F, 0x50}}, base::get() + 0x31562A);
     log::debug("res {}", res2);
 #endif
-
-    static std::vector<std::string> strings;
-
-    for (auto p : Mod::get()->getPatches()) {
-        if (p->isEnabled()) {
-            auto res = p->disable().err();
-            if (res != std::nullopt) {
-                log::warn("Failed to disable patch at {}, error: {}", p->getAddress() - base::get(), res);
-            }
-        }
-    }
-
-    patches::fixCyrillicP();
 
     auto languageID = gdl::getCurrentLanguage();
 

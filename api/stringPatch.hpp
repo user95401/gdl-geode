@@ -31,7 +31,7 @@ namespace gdl {
     };
 
     // all addrs are absolute
-    [[nodiscard]] bool patchStdString2(const char* str, const std::vector<PatchBlock>& blocks);
+    [[nodiscard]] bool patchStdString2(const char* str, const std::vector<PatchBlock>& blocks, uintptr_t bufAssignInsn);
 #elif defined(GEODE_IS_ANDROID32)
     [[nodiscard]] GDLAPI_DLL bool patchString(const uintptr_t srcAddr, const char* str);
 #endif
