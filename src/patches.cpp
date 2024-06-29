@@ -56,7 +56,9 @@ void patches::patchStrings() {
 //     log::debug("res {}", res2);
 
     bool res2;
-    res2 = gdl::patchStdString2("Hello world! This is a long enough string!", {{base::get() + 0x31561F, 0x50}}, base::get() + 0x31562A);
+    res2 = gdl::patchStdString2("Hello world! This is a long enough string!", {{base::get() + 0x31561F, 0x4F}}, base::get() + 0x31562A); // quit text
+    log::debug("res {}", res2);
+    res2 = gdl::patchStdString2("Test!", {{base::get() + 0x461B64, 0x24}}, base::get() + 0x461B76); // cancel btn in comments posting menu
     log::debug("res {}", res2);
 #endif
 

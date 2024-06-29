@@ -235,6 +235,35 @@ namespace gdl {
 
         req.operands[0].type = ZYDIS_OPERAND_TYPE_MEMORY;
         req.operands[0].mem.base = instruction.operands[0].mem.base;
+        req.operands[0].mem.displacement = instruction.operands[0].mem.disp.value;
+        req.operands[0].mem.size = 8;
+
+        req.operands[1].type = ZYDIS_OPERAND_TYPE_REGISTER;
+        req.operands[1].reg.value = ZYDIS_REGISTER_RAX;
+
+        ZyanU8 encoded_instruction0[ZYDIS_MAX_INSTRUCTION_LENGTH];
+        ZyanUSize encoded_length0 = sizeof(encoded_instruction0);
+
+        if (ZYAN_FAILED(ZydisEncoderEncodeInstruction(&req, encoded_instruction0, &encoded_length0))) {
+            log::error("Failed to encode instruction [0]!");
+            return false;
+        }
+
+        {
+            std::string zvzv = "";
+            for (auto i = 0; i < encoded_length0; i++) {
+                zvzv += std::format("{:02X} ", encoded_instruction0[i]);
+            }
+            log::debug("{}", zvzv);
+        }
+
+        memset(&req, 0, sizeof(req));
+        req.mnemonic = ZYDIS_MNEMONIC_MOV;
+        req.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
+        req.operand_count = 2;
+
+        req.operands[0].type = ZYDIS_OPERAND_TYPE_MEMORY;
+        req.operands[0].mem.base = instruction.operands[0].mem.base;
         req.operands[0].mem.displacement = instruction.operands[0].mem.disp.value + 16;
         req.operands[0].mem.size = 8;
 
@@ -287,7 +316,7 @@ namespace gdl {
         }
 
         // clang-format off
-        auto tramp = PageManager::get().getMemoryForSize(0x2a + instruction.info.length + encoded_length1 + encoded_length2);
+        auto tramp = PageManager::get().getMemoryForSize(0x2a + encoded_length0 + encoded_length1 + encoded_length2);
         auto offset = 0;
 
         tramp[offset] = 0x48; tramp[offset+1] = 0xc7; tramp[offset+2] = 0xc1;
@@ -299,8 +328,8 @@ namespace gdl {
         *(int32_t*)(tramp + offset + 1) = (int32_t)relAddr;
         offset += 5;
 
-        memcpy(tramp + offset, (void*)bufAssignInsn, instruction.info.length);
-        offset += instruction.info.length;
+        memcpy(tramp + offset, encoded_instruction0, encoded_length0);
+        offset += encoded_length0;
 
         memcpy(tramp + offset, encoded_instruction1, encoded_length1);
         offset += encoded_length1;
@@ -327,12 +356,13 @@ namespace gdl {
         tramp[offset] = 0xe9;
         relAddr = (uint64_t)(blocks[0].start + blocks[0].len) - ((uint64_t)tramp + offset + 5);
         *(int32_t*)(tramp + offset + 1) = (int32_t)relAddr;
-        
+        offset += 5;
+
         // clang-format on
 
         {
             std::string zvzv = "";
-            for (auto i = 0; i < offset + 1; i++) {
+            for (auto i = 0; i < offset; i++) {
                 zvzv += std::format("{:02X} ", tramp[i]);
             }
             log::debug("{}", zvzv);
