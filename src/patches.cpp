@@ -2,11 +2,6 @@
 #include "utils.hpp"
 #include "patches.hpp"
 
-// #if defined(GEODE_IS_WINDOWS)
-// #include <geode.custom-keybinds/include/Keybinds.hpp>
-// using namespace keybinds;
-// #endif
-
 using namespace geode::prelude;
 
 #include "api.hpp"
