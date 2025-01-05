@@ -42,6 +42,6 @@ $execute {
 // #endif
     patches::patchStrings();
 
-    gdl::addTranslations("language", {{gdl::GDL_ENGLISH, "Language"}, {gdl::GDL_RUSSIAN, "Язык"}});
-    gdl::addTranslations("apply", {{gdl::GDL_ENGLISH, "Apply"}, {gdl::GDL_RUSSIAN, "Применить"}});
+    // gdl::addTranslations("language", {{gdl::GDL_ENGLISH, "Language"}, {gdl::GDL_RUSSIAN, "Язык"}});
+    // gdl::addTranslations("apply", {{gdl::GDL_ENGLISH, "Apply"}, {gdl::GDL_RUSSIAN, "Применить"}});
 };

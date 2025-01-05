@@ -16,121 +16,121 @@
 
 using namespace geode::prelude;
 
-class $modify(MultilineBitmapFont) {
-    struct Fields {
-        float m_textScale;
-        std::string m_fontName;
-        float m_maxWidth;
-    };
+// class $modify(MultilineBitmapFont) {
+//     struct Fields {
+//         float m_textScale;
+//         std::string m_fontName;
+//         float m_maxWidth;
+//     };
 
-    gd::string readColorInfo(gd::string s) {
-        std::string str = s;
+//     gd::string readColorInfo(gd::string s) {
+//         std::string str = s;
 
-        std::string str2;
-        for (auto it = str.begin(); it != str.end();) {
-            auto cp = utf8::next(it, str.end());
-            str2 += __isascii(cp) ? (char)cp : 'W';
-        }
+//         std::string str2;
+//         for (auto it = str.begin(); it != str.end();) {
+//             auto cp = utf8::next(it, str.end());
+//             str2 += __isascii(cp) ? (char)cp : 'W';
+//         }
 
-        return MultilineBitmapFont::readColorInfo(str2);
-    }
+//         return MultilineBitmapFont::readColorInfo(str2);
+//     }
 
-    // bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool colorsDisabled) {
-    //     log::debug("string!!! {} {} {}", p1.size(), p1.capacity(), p1.c_str());
-    //     m_fields->m_textScale = p2;
-    //     m_fields->m_fontName = p0;
-    //     m_fields->m_maxWidth = p3;
-    //     // log::debug("MBF;{};{};{};{}", m_fields->m_textScale, m_fields->m_fontName, (std::string)p1, p3);
+//     // bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool colorsDisabled) {
+//     //     log::debug("string!!! {} {} {}", p1.size(), p1.capacity(), p1.c_str());
+//     //     m_fields->m_textScale = p2;
+//     //     m_fields->m_fontName = p0;
+//     //     m_fields->m_maxWidth = p3;
+//     //     // log::debug("MBF;{};{};{};{}", m_fields->m_textScale, m_fields->m_fontName, (std::string)p1, p3);
 
-    //     auto notags = std::regex_replace((std::string)p1, std::regex("(<c.>)|(<\\/c>)|(<d...>)|(<s...>)|(<\\/s>)|(<i...>)|(<\\/i>)"), "");
-    //     if (!MultilineBitmapFont::initWithFont(p0, notags, p2, p3, p4, p5, true))
-    //         return false;
+//     //     auto notags = std::regex_replace((std::string)p1, std::regex("(<c.>)|(<\\/c>)|(<d...>)|(<s...>)|(<\\/s>)|(<i...>)|(<\\/i>)"), "");
+//     //     if (!MultilineBitmapFont::initWithFont(p0, notags, p2, p3, p4, p5, true))
+//     //         return false;
 
-    //     if (!colorsDisabled) {
-    //         m_tagsArray = CCArray::create();
-    //         m_tagsArray->retain();
+//     //     if (!colorsDisabled) {
+//     //         m_tagsArray = CCArray::create();
+//     //         m_tagsArray->retain();
 
-    //         MultilineBitmapFont::readColorInfo(p1);
+//     //         MultilineBitmapFont::readColorInfo(p1);
 
-    //         for (auto i = 0u; i < m_tagsArray->count(); i++) {
-    //             auto tag = (TextStyleSection*)(m_tagsArray->objectAtIndex(i));
+//     //         for (auto i = 0u; i < m_tagsArray->count(); i++) {
+//     //             auto tag = (TextStyleSection*)(m_tagsArray->objectAtIndex(i));
 
-    //             if (tag->m_end == -1 && tag->m_type == 4) {
-    //                 auto child = (CCFontSprite*)m_lettersArray->objectAtIndex(tag->m_start);
-    //                 if (child) {
-    //                     child->m_delayTime = tag->m_delayTime;
-    //                 }
-    //             } else {
-    //                 for (auto i = tag->m_start; i <= tag->m_end; i++) {
-    //                     auto child = (CCFontSprite*)(m_lettersArray->objectAtIndex(i));
-    //                     if (!child)
-    //                         continue;
+//     //             if (tag->m_end == -1 && tag->m_type == 4) {
+//     //                 auto child = (CCFontSprite*)m_lettersArray->objectAtIndex(tag->m_start);
+//     //                 if (child) {
+//     //                     child->m_delayTime = tag->m_delayTime;
+//     //                 }
+//     //             } else {
+//     //                 for (auto i = tag->m_start; i <= tag->m_end; i++) {
+//     //                     auto child = (CCFontSprite*)(m_lettersArray->objectAtIndex(i));
+//     //                     if (!child)
+//     //                         continue;
 
-    //                     switch (tag->m_type) {
-    //                     case 1: {
-    //                         child->setColor(tag->m_col);
-    //                     } break;
-    //                     case 2: {
-    //                         child->m_isInstant = true;
-    //                         child->m_instantValue = tag->m_instantNum;
-    //                     } break;
-    //                     case 3: {
-    //                         child->m_thisTagNumber = i;
-    //                         child->m_shakeVal1 = (float)tag->m_shakeNum1;
-    //                         child->m_shakeVal2 = tag->m_shakeNum2 <= 0 ? 0.0f : 1.0f / tag->m_shakeNum2;
-    //                     } break;
-    //                     default:
-    //                         break;
-    //                     }
-    //                 }
-    //             }
-    //         }
+//     //                     switch (tag->m_type) {
+//     //                     case 1: {
+//     //                         child->setColor(tag->m_col);
+//     //                     } break;
+//     //                     case 2: {
+//     //                         child->m_isInstant = true;
+//     //                         child->m_instantValue = tag->m_instantNum;
+//     //                     } break;
+//     //                     case 3: {
+//     //                         child->m_thisTagNumber = i;
+//     //                         child->m_shakeVal1 = (float)tag->m_shakeNum1;
+//     //                         child->m_shakeVal2 = tag->m_shakeNum2 <= 0 ? 0.0f : 1.0f / tag->m_shakeNum2;
+//     //                     } break;
+//     //                     default:
+//     //                         break;
+//     //                     }
+//     //                 }
+//     //             }
+//     //         }
 
-    //         m_tagsArray->release();
-    //         m_tagsArray = nullptr;
-    //     }
+//     //         m_tagsArray->release();
+//     //         m_tagsArray = nullptr;
+//     //     }
 
-    //     return true;
-    // }
+//     //     return true;
+//     // }
 
-    gd::string stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
-        auto width = m_fields->m_maxWidth;
+//     gd::string stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
+//         auto width = m_fields->m_maxWidth;
 
-        std::string str = p0;
-        if (auto pos = str.find('\n'); pos != std::string::npos) {
-            str = str.substr(0, pos);
-        }
+//         std::string str = p0;
+//         if (auto pos = str.find('\n'); pos != std::string::npos) {
+//             str = str.substr(0, pos);
+//         }
 
-        auto lbl = CCLabelBMFont::create("", m_fields->m_fontName.c_str());
-        lbl->setScale(m_fields->m_textScale);
+//         auto lbl = CCLabelBMFont::create("", m_fields->m_fontName.c_str());
+//         lbl->setScale(m_fields->m_textScale);
 
-        bool overflown = false;
-        std::string current;
-        for (auto it = str.begin(); it < str.end();) {
-            auto cp = utf8::next(it, str.end());
-            utf8::append(cp, current);
+//         bool overflown = false;
+//         std::string current;
+//         for (auto it = str.begin(); it < str.end();) {
+//             auto cp = utf8::next(it, str.end());
+//             utf8::append(cp, current);
 
-            // auto x = cocos2d::FNTConfigLoadFile("chatFont.fnt");
-            // auto y = x->m_pFontDefDictionary;
+//             // auto x = cocos2d::FNTConfigLoadFile("chatFont.fnt");
+//             // auto y = x->m_pFontDefDictionary;
 
-            lbl->setString(current.c_str());
-            if (lbl->getScaledContentSize().width > width) {
-                overflown = true;
-                break;
-            }
-        }
+//             lbl->setString(current.c_str());
+//             if (lbl->getScaledContentSize().width > width) {
+//                 overflown = true;
+//                 break;
+//             }
+//         }
 
-        if (overflown) {
-            if (auto pos = current.rfind(' '); pos != std::string::npos) {
-                current.erase(current.begin() + pos, current.end());
-            }
-        } else {
-            current += " ";
-        }
+//         if (overflown) {
+//             if (auto pos = current.rfind(' '); pos != std::string::npos) {
+//                 current.erase(current.begin() + pos, current.end());
+//             }
+//         } else {
+//             current += " ";
+//         }
 
-        return current;
-    }
-};
+//         return current;
+//     }
+// };
 
 class $modify(CCTextureCache) {
     cocos2d::CCTexture2D* addImage(const char* name, bool idk) {
@@ -166,7 +166,9 @@ class $modify(CCLabelBMFont) {
 
 class $modify(LoadingLayer){
     void loadAssets(){
+        log::debug("load step {}", this->m_loadStep);
         if(this->m_loadStep == 11 && gdl::getCurrentLanguage() != gdl::GDL_ENGLISH){
+            log::error("hiii");
             auto plist = Mod::get()->getResourcesDir() / fmt::format("GDL_TranslatedFrames-{}.plist", gdl::getLanguageCodename(gdl::getCurrentLanguage()));
             auto png = Mod::get()->getResourcesDir() / fmt::format("GDL_TranslatedFrames-{}.png", gdl::getLanguageCodename(gdl::getCurrentLanguage()));
 
@@ -211,12 +213,13 @@ void gd_string_assign_hk(void* self, char* src, size_t len) {
 
 $execute {
 #ifdef GEODE_IS_WINDOWS
-    constexpr auto GD_STR_ASSIGN_ADDR = 0x3BE50;
-    gd_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + GD_STR_ASSIGN_ADDR);
-    auto res2 = Mod::get()->hook((void*)(base::get() + GD_STR_ASSIGN_ADDR), gd_string_assign_hk, "gd::string::assign", tulip::hook::TulipConvention::Thiscall).err();
-    if (res2 != std::nullopt) {
-        log::error("Failed to hook gd::string::assign because of: {}", res2);
-    }
+    // constexpr auto GD_STR_ASSIGN_ADDR = 0x3BE50; // OLD (2.206?)
+    // constexpr auto GD_STR_ASSIGN_ADDR = 0x3cca0;
+    // gd_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + GD_STR_ASSIGN_ADDR);
+    // auto res2 = Mod::get()->hook((void*)(base::get() + GD_STR_ASSIGN_ADDR), gd_string_assign_hk, "gd::string::assign", tulip::hook::TulipConvention::Thiscall).err();
+    // if (res2 != std::nullopt) {
+    //     log::error("Failed to hook gd::string::assign because of: {}", res2);
+    // }
     
     // constexpr auto GD_STR_APPEND_ADDR = 0x21DE0;
     // gd_string_append_o = reinterpret_cast<void (__thiscall*)(void*, char*, size_t)>(base::get() + GD_STR_APPEND_ADDR);

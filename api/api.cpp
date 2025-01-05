@@ -8,7 +8,7 @@ namespace gdl {
     static std::unordered_map<std::string, std::unordered_map<Language, std::string>> apiStrings;
 
     Language getCurrentLanguage() {
-        return (Language)Mod::get()->getSavedValue<int>("language-id");
+        return (Language)Mod::get()->getSavedValue<int>("language-id", Language::GDL_RUSSIAN);
     }
 
     const char* getLanguageName(Language language) {
