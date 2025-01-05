@@ -35,63 +35,63 @@ class $modify(MultilineBitmapFont) {
         return MultilineBitmapFont::readColorInfo(str2);
     }
 
-    bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool colorsDisabled) {
-        log::debug("string!!! {} {} {}", p1.size(), p1.capacity(), p1.c_str());
-        m_fields->m_textScale = p2;
-        m_fields->m_fontName = p0;
-        m_fields->m_maxWidth = p3;
-        // log::debug("MBF;{};{};{};{}", m_fields->m_textScale, m_fields->m_fontName, (std::string)p1, p3);
+    // bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool colorsDisabled) {
+    //     log::debug("string!!! {} {} {}", p1.size(), p1.capacity(), p1.c_str());
+    //     m_fields->m_textScale = p2;
+    //     m_fields->m_fontName = p0;
+    //     m_fields->m_maxWidth = p3;
+    //     // log::debug("MBF;{};{};{};{}", m_fields->m_textScale, m_fields->m_fontName, (std::string)p1, p3);
 
-        auto notags = std::regex_replace((std::string)p1, std::regex("(<c.>)|(<\\/c>)|(<d...>)|(<s...>)|(<\\/s>)|(<i...>)|(<\\/i>)"), "");
-        if (!MultilineBitmapFont::initWithFont(p0, notags, p2, p3, p4, p5, true))
-            return false;
+    //     auto notags = std::regex_replace((std::string)p1, std::regex("(<c.>)|(<\\/c>)|(<d...>)|(<s...>)|(<\\/s>)|(<i...>)|(<\\/i>)"), "");
+    //     if (!MultilineBitmapFont::initWithFont(p0, notags, p2, p3, p4, p5, true))
+    //         return false;
 
-        if (!colorsDisabled) {
-            m_tagsArray = CCArray::create();
-            m_tagsArray->retain();
+    //     if (!colorsDisabled) {
+    //         m_tagsArray = CCArray::create();
+    //         m_tagsArray->retain();
 
-            MultilineBitmapFont::readColorInfo(p1);
+    //         MultilineBitmapFont::readColorInfo(p1);
 
-            for (auto i = 0u; i < m_tagsArray->count(); i++) {
-                auto tag = (TextStyleSection*)(m_tagsArray->objectAtIndex(i));
+    //         for (auto i = 0u; i < m_tagsArray->count(); i++) {
+    //             auto tag = (TextStyleSection*)(m_tagsArray->objectAtIndex(i));
 
-                if (tag->m_end == -1 && tag->m_type == 4) {
-                    auto child = (CCFontSprite*)m_lettersArray->objectAtIndex(tag->m_start);
-                    if (child) {
-                        child->m_delayTime = tag->m_delayTime;
-                    }
-                } else {
-                    for (auto i = tag->m_start; i <= tag->m_end; i++) {
-                        auto child = (CCFontSprite*)(m_lettersArray->objectAtIndex(i));
-                        if (!child)
-                            continue;
+    //             if (tag->m_end == -1 && tag->m_type == 4) {
+    //                 auto child = (CCFontSprite*)m_lettersArray->objectAtIndex(tag->m_start);
+    //                 if (child) {
+    //                     child->m_delayTime = tag->m_delayTime;
+    //                 }
+    //             } else {
+    //                 for (auto i = tag->m_start; i <= tag->m_end; i++) {
+    //                     auto child = (CCFontSprite*)(m_lettersArray->objectAtIndex(i));
+    //                     if (!child)
+    //                         continue;
 
-                        switch (tag->m_type) {
-                        case 1: {
-                            child->setColor(tag->m_col);
-                        } break;
-                        case 2: {
-                            child->m_isInstant = true;
-                            child->m_instantValue = tag->m_instantNum;
-                        } break;
-                        case 3: {
-                            child->m_thisTagNumber = i;
-                            child->m_shakeVal1 = (float)tag->m_shakeNum1;
-                            child->m_shakeVal2 = tag->m_shakeNum2 <= 0 ? 0.0f : 1.0f / tag->m_shakeNum2;
-                        } break;
-                        default:
-                            break;
-                        }
-                    }
-                }
-            }
+    //                     switch (tag->m_type) {
+    //                     case 1: {
+    //                         child->setColor(tag->m_col);
+    //                     } break;
+    //                     case 2: {
+    //                         child->m_isInstant = true;
+    //                         child->m_instantValue = tag->m_instantNum;
+    //                     } break;
+    //                     case 3: {
+    //                         child->m_thisTagNumber = i;
+    //                         child->m_shakeVal1 = (float)tag->m_shakeNum1;
+    //                         child->m_shakeVal2 = tag->m_shakeNum2 <= 0 ? 0.0f : 1.0f / tag->m_shakeNum2;
+    //                     } break;
+    //                     default:
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //         }
 
-            m_tagsArray->release();
-            m_tagsArray = nullptr;
-        }
+    //         m_tagsArray->release();
+    //         m_tagsArray = nullptr;
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 
     gd::string stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
         auto width = m_fields->m_maxWidth;
