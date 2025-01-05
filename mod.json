@@ -1,14 +1,13 @@
 {
-	"geode": "3.1.1",
+	"geode": "4.1.2",
 	"version": "v2.0.0",
 	"gd": {
-		"android": "2.206",
-		"win": "2.206"
+		"win": "2.2074"
 	},
 	"id": "gdlteam.gdl",
 	"name": "GDL",
 	"developer": "GDL Team",
-	"description": "A mod that translates GD into Russian language",
+	"description": "Mod that translates GD into Russian language",
 	"early-load": true,
 	"resources": {
 		"files": [

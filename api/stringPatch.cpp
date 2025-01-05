@@ -373,7 +373,7 @@ namespace gdl {
         *(int32_t*)(patch + 1) = (int32_t)relAddr;
 
         if (auto p = Mod::get()->patch((void*)blocks[0].start, ByteVector(patch, patch + sizeof(patch))); p.isErr()) {
-            log::error("patch error {}", p.error());
+            log::error("patch error {}", p.err());
             return false;
         }
 
@@ -381,14 +381,14 @@ namespace gdl {
             auto& block = blocks[i];
             if (block.len < 5) {
                 if (auto p = Mod::get()->patch((void*)block.start, ByteVector(block.len, 0x90)); p.isErr()) {
-                    log::error("patch error {}", p.error());
+                    log::error("patch error {}", p.err());
                     return false;
                 }
             } else {
                 uint8_t patch2[] = {0xe9, 0x00, 0x00, 0x00, 0x00};
                 *(int32_t*)(patch2 + 1) = block.len - 5;
                 if (auto p = Mod::get()->patch((void*)block.start, ByteVector(patch2, patch2 + sizeof(patch2))); p.isErr()) {
-                    log::error("patch error {}", p.error());
+                    log::error("patch error {}", p.err());
                     return false;
                 }
             }
