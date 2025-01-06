@@ -39,8 +39,8 @@ void patches::patchStrings() {
     patches::fixCyrillicP();
 
 #ifdef GEODE_IS_WINDOWS64
-//     bool res3;
-//     res3 = gdl::patchCString(base::get() + 0x3151D5, "Привет, мир!");
+        bool res3;
+        res3 = gdl::patchCString(base::get() + 0x320CB5, "Настройки");
 //     log::debug("{}", res3);
 //     res3 = gdl::patchCString(base::get() + 0x350598, "Привет, мир 2!");
 //     log::debug("{}", res3);

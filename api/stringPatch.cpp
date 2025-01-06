@@ -3,178 +3,42 @@
 #include <Zydis/Zydis.h>
 #include <string.h>
 #include <chrono>
+#include <PageManager.hpp>
 
 using namespace geode::prelude;
-
-#if defined(GEODE_IS_WINDOWS64)
-
-class PageManager {
-    struct Page {
-        uint8_t* m_address;
-        size_t m_totalSize;
-        size_t m_offset; // aka used size
-        size_t m_id;
-
-        inline uint8_t* getOffsetAddress() { return m_address + m_offset; }
-        inline bool canFit(size_t len) { return m_totalSize - m_offset >= len; }
-        inline void reserve(size_t len) { m_offset = std::min(m_offset + len, m_totalSize); }
-        void free() {
-            if (m_address) {
-                VirtualFree(m_address, m_totalSize, MEM_RELEASE);
-                m_address = nullptr;
-                m_totalSize = 0;
-                m_offset = 0;
-            }
-        }
-    };
-
-  public:
-    static PageManager& get() {
-        static PageManager inst;
-        return inst;
-    }
-
-    ~PageManager() { freeAll(); }
-
-    void freeAll() {
-        for (auto& page : m_pages)
-            page.free();
-    }
-
-    // if the last page can fit those bytes, return it. otherwise, alloc a new page
-    Page& getPageForSize(size_t size) {
-        if (m_pages.size() > 0 && m_pages.back().canFit(size)) {
-            return m_pages.back();
-        } else {
-            return allocNewPage();
-        }
-    }
-
-    uint8_t* getMemoryForSize(size_t size) {
-        auto& page = getPageForSize(size);
-        auto ret = page.getOffsetAddress();
-        page.reserve(size);
-        return ret;
-    }
-
-  private:
-    Page& allocNewPage() {
-        SYSTEM_INFO sysInfo;
-        GetSystemInfo(&sysInfo);
-        const uint64_t PAGE_SIZE = sysInfo.dwPageSize;
-
-        auto targetAddr = base::get() + 0x251000; // approximately the middle of the exe file
-
-        void* newPageAddr = nullptr;
-
-        uint64_t startAddr = (uint64_t(targetAddr) & ~(PAGE_SIZE - 1)); // round down to nearest page boundary
-        uint64_t minAddr = std::min(startAddr - 0x7FFFFF00, (uint64_t)sysInfo.lpMinimumApplicationAddress);
-        uint64_t maxAddr = std::max(startAddr + 0x7FFFFF00, (uint64_t)sysInfo.lpMaximumApplicationAddress);
-
-        uint64_t startPage = (startAddr - (startAddr % PAGE_SIZE));
-
-        uint64_t pageOffset = 1;
-        while (1) {
-            uint64_t byteOffset = pageOffset * PAGE_SIZE;
-            uint64_t highAddr = startPage + byteOffset;
-            uint64_t lowAddr = (startPage > byteOffset) ? startPage - byteOffset : 0;
-
-            bool needsExit = highAddr > maxAddr && lowAddr < minAddr;
-
-            if (highAddr < maxAddr) {
-                void* outAddr = VirtualAlloc((void*)highAddr, PAGE_SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-                if (outAddr) {
-                    newPageAddr = outAddr;
-                    break;
-                }
-            }
-
-            if (lowAddr > minAddr) {
-                void* outAddr = VirtualAlloc((void*)lowAddr, PAGE_SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-                if (outAddr != nullptr) {
-                    newPageAddr = outAddr;
-                    break;
-                }
-            }
-
-            pageOffset++;
-
-            if (needsExit) {
-                break;
-            }
-        }
-
-        if (newPageAddr == nullptr) {
-            log::error("page failed to alloc (what?)");
-            throw std::runtime_error("gdl: page failed to alloc");
-        }
-
-        m_pages.push_back(Page {.m_address = (uint8_t*)newPageAddr, .m_totalSize = PAGE_SIZE, .m_offset = 0, .m_id = m_pages.size()});
-        return m_pages.back();
-    }
-
-    std::vector<Page> m_pages;
-};
-
-#endif
 
 namespace gdl {
 #if defined(GEODE_IS_WINDOWS64)
     bool patchCString(uintptr_t srcAddr, const char* str) {
-        ZydisDisassembledInstruction instruction;
-        if (ZYAN_SUCCESS(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, srcAddr, (void*)srcAddr, ZYDIS_MAX_INSTRUCTION_LENGTH, &instruction))) {
-            if (instruction.info.opcode != 0x8d) {
-                log::error("instruction is not lea!");
-                return false;
-            }
-
-            if (instruction.info.length != 7) {
-                log::error("wtf instruction isnt 7 bytes long");
-                return false;
-            }
-        } else {
-            log::error("Failed to decomp the orig instruction!");
+        uint8_t* arr = (uint8_t*)srcAddr;
+        if(arr[1] != 0x8D) {
+            log::error("0x{:X}: instruction isn't lea!", srcAddr);
             return false;
         }
 
-        // mov <original reg>, <string address>
-        ZydisEncoderRequest req;
-        memset(&req, 0, sizeof(req));
+        uint8_t reg = arr[2] >> 3;
 
-        req.mnemonic = ZYDIS_MNEMONIC_MOV;
-        req.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
-        req.operand_count = 2;
+        std::array<uint8_t, 11> patch = {
+            static_cast<uint8_t>(0x48 | (reg > 0x07)),      // prefix 64 bit operation
+            static_cast<uint8_t>(0xB8 | (reg & 0xF7)),      // mov <reg>,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // <64-bit value>
+            0xC3                                            // ret
+        };
 
-        req.operands[0].type = ZYDIS_OPERAND_TYPE_REGISTER;
-        req.operands[0].reg.value = instruction.operands[0].reg.value;
-
-        req.operands[1].type = ZYDIS_OPERAND_TYPE_IMMEDIATE;
-        req.operands[1].imm.u = (uintptr_t)str;
-
-        ZyanU8 encoded_instruction[ZYDIS_MAX_INSTRUCTION_LENGTH];
-        ZyanUSize encoded_length = sizeof(encoded_instruction);
-
-        if (ZYAN_FAILED(ZydisEncoderEncodeInstruction(&req, encoded_instruction, &encoded_length))) {
-            log::error("Failed to encode instruction!");
-            return false;
-        }
+        *(uintptr_t*)(patch.data() + 2) = (uintptr_t)str;
 
         // because our instruction takes 10 bytes and the original one takes 7 bytes, we need to place a `call` in place of the original instruction that points to a trampoline
         // that we allocate which, in its turn, will contain the `mov` and `ret` instructions
 
-        auto tramp = PageManager::get().getMemoryForSize(encoded_length + 1); // + 1 because of `ret`
+        auto tramp = PageManager::get().getMemoryForSize(11); // + 1 because of `ret`
+        std::copy(patch.begin(), patch.end(), tramp);
 
-        memcpy(tramp, encoded_instruction, encoded_length);
-        tramp[encoded_length] = 0xC3; // ret
-
-        // now, the call instruction
-
-        uint8_t callBytes[] = {0xE8, 0x00, 0x00, 0x00, 0x00, 0x90, 0x90}; // call <tramp> and 2 NOPs
+        std::array<uint8_t, 7> callBytes = {0xE8, 0x00, 0x00, 0x00, 0x00, 0x90, 0x90}; // call <tramp> and 2 NOPs
         auto relAddr = (uintptr_t)tramp - ((uintptr_t)srcAddr + 5);       // call is 5 bytes long
-        *(int32_t*)(callBytes + 1) = (int32_t)relAddr;
+        *(int32_t*)(callBytes.data() + 1) = (int32_t)relAddr;
 
-        if (Mod::get()->patch((void*)srcAddr, ByteVector(callBytes, callBytes + sizeof(callBytes))).isErr()) {
-            log::error("failed to patch!");
+        if (Mod::get()->patch((void*)srcAddr, ByteVector(callBytes.begin(), callBytes.end())).isErr()) {
+            log::error("0x{:X}: failed to patch!", srcAddr);
             return false;
         }
 
