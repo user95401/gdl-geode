@@ -59,6 +59,11 @@ void patches::patchStrings() {
     // log::debug("res {}", res2);
     // res2 = gdl::patchStdString2("Hello!", {{base::get() + 0x67032, 0x2a}}, base::get() + 0x67052); // "Ease Out" which is inlined
     // log::debug("res {}", res2);
+
+    // bool res;
+    // res = gdl::patchCString(base::get() + 0x35C17A, "Привет GDL!"); // yay it works
+
+    
 #endif
 
     auto languageID = gdl::getCurrentLanguage();
