@@ -19,19 +19,10 @@ namespace gdl {
     /// @return Whether the patch was successful
     [[nodiscard]] GDLAPI_DLL bool patchCString(uintptr_t srcAddr, const char* str);
 
-    // All addresses are absolute!
-    [[nodiscard]] GDLAPI_DLL bool patchStdString(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns);
+    /// @brief patch inline std::string
+    /// @param srcAddr - absolute address of lea/mov instruction
+    [[nodiscard]] GDLAPI_DLL bool patchStdString(uintptr_t absAddr, std::string const& str);
     
-    // same as patchStdString but all addresses are relative to gd base (it will be added to all addresses)
-    [[nodiscard]] GDLAPI_DLL bool patchStdStringRel(const char* str, uintptr_t allocSizeInsn, uintptr_t sizeInsn, uintptr_t capacityInsn, std::vector<uintptr_t> assignInsns);
-
-    struct PatchBlock {
-        uintptr_t start;
-        unsigned int len;
-    };
-
-    // all addrs are absolute
-    [[nodiscard]] bool patchStdString2(const char* str, const std::vector<PatchBlock>& blocks, uintptr_t bufAssignInsn);
 #elif defined(GEODE_IS_ANDROID32)
     [[nodiscard]] GDLAPI_DLL bool patchString(const uintptr_t srcAddr, const char* str);
 #endif
