@@ -16,121 +16,121 @@
 
 using namespace geode::prelude;
 
-// class $modify(MultilineBitmapFont) {
-//     struct Fields {
-//         float m_textScale;
-//         std::string m_fontName;
-//         float m_maxWidth;
-//     };
+class $modify(MultilineBitmapFont) {
+    struct Fields {
+        float m_textScale;
+        std::string m_fontName;
+        float m_maxWidth;
+    };
 
-//     gd::string readColorInfo(gd::string s) {
-//         std::string str = s;
+    gd::string readColorInfo(gd::string s) {
+        std::string str = s;
 
-//         std::string str2;
-//         for (auto it = str.begin(); it != str.end();) {
-//             auto cp = utf8::next(it, str.end());
-//             str2 += __isascii(cp) ? (char)cp : 'W';
-//         }
+        std::string str2;
+        for (auto it = str.begin(); it != str.end();) {
+            auto cp = utf8::next(it, str.end());
+            str2 += __isascii(cp) ? (char)cp : 'W';
+        }
 
-//         return MultilineBitmapFont::readColorInfo(str2);
-//     }
+        return MultilineBitmapFont::readColorInfo(str2);
+    }
 
-//     // bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool colorsDisabled) {
-//     //     log::debug("string!!! {} {} {}", p1.size(), p1.capacity(), p1.c_str());
-//     //     m_fields->m_textScale = p2;
-//     //     m_fields->m_fontName = p0;
-//     //     m_fields->m_maxWidth = p3;
-//     //     // log::debug("MBF;{};{};{};{}", m_fields->m_textScale, m_fields->m_fontName, (std::string)p1, p3);
+    bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool colorsDisabled) {
+        // log::debug("string!!! {} {} {}", p1.size(), p1.capacity(), p1.c_str());
+        m_fields->m_textScale = p2;
+        m_fields->m_fontName = p0;
+        m_fields->m_maxWidth = p3;
+        // log::debug("MBF;{};{};{};{}", m_fields->m_textScale, m_fields->m_fontName, (std::string)p1, p3);
 
-//     //     auto notags = std::regex_replace((std::string)p1, std::regex("(<c.>)|(<\\/c>)|(<d...>)|(<s...>)|(<\\/s>)|(<i...>)|(<\\/i>)"), "");
-//     //     if (!MultilineBitmapFont::initWithFont(p0, notags, p2, p3, p4, p5, true))
-//     //         return false;
+        auto notags = std::regex_replace((std::string)p1, std::regex("(<c.>)|(<\\/c>)|(<d...>)|(<s...>)|(<\\/s>)|(<i...>)|(<\\/i>)"), "");
+        if (!MultilineBitmapFont::initWithFont(p0, notags, p2, p3, p4, p5, true))
+            return false;
 
-//     //     if (!colorsDisabled) {
-//     //         m_tagsArray = CCArray::create();
-//     //         m_tagsArray->retain();
+        if (!colorsDisabled) {
+            m_specialDescriptors = CCArray::create();
+            m_specialDescriptors->retain();
 
-//     //         MultilineBitmapFont::readColorInfo(p1);
+            MultilineBitmapFont::readColorInfo(p1);
 
-//     //         for (auto i = 0u; i < m_tagsArray->count(); i++) {
-//     //             auto tag = (TextStyleSection*)(m_tagsArray->objectAtIndex(i));
+            for (auto i = 0u; i < m_specialDescriptors->count(); i++) {
+                auto tag = (TextStyleSection*)(m_specialDescriptors->objectAtIndex(i));
 
-//     //             if (tag->m_end == -1 && tag->m_type == 4) {
-//     //                 auto child = (CCFontSprite*)m_lettersArray->objectAtIndex(tag->m_start);
-//     //                 if (child) {
-//     //                     child->m_delayTime = tag->m_delayTime;
-//     //                 }
-//     //             } else {
-//     //                 for (auto i = tag->m_start; i <= tag->m_end; i++) {
-//     //                     auto child = (CCFontSprite*)(m_lettersArray->objectAtIndex(i));
-//     //                     if (!child)
-//     //                         continue;
+                if (tag->m_endIndex == -1 && tag->m_styleType == TextStyleType::Delayed) {
+                    auto child = (CCFontSprite*)m_characters->objectAtIndex(tag->m_startIndex);
+                    if (child) {
+                        child->m_delayTime = tag->m_delay;
+                    }
+                } else {
+                    for (auto i = tag->m_startIndex; i <= tag->m_endIndex; i++) {
+                        auto child = (CCFontSprite*)(m_characters->objectAtIndex(i));
+                        if (!child)
+                            continue;
 
-//     //                     switch (tag->m_type) {
-//     //                     case 1: {
-//     //                         child->setColor(tag->m_col);
-//     //                     } break;
-//     //                     case 2: {
-//     //                         child->m_isInstant = true;
-//     //                         child->m_instantValue = tag->m_instantNum;
-//     //                     } break;
-//     //                     case 3: {
-//     //                         child->m_thisTagNumber = i;
-//     //                         child->m_shakeVal1 = (float)tag->m_shakeNum1;
-//     //                         child->m_shakeVal2 = tag->m_shakeNum2 <= 0 ? 0.0f : 1.0f / tag->m_shakeNum2;
-//     //                     } break;
-//     //                     default:
-//     //                         break;
-//     //                     }
-//     //                 }
-//     //             }
-//     //         }
+                        switch (tag->m_styleType) {
+                        case TextStyleType::Colored: {
+                            child->setColor(tag->m_color);
+                        } break;
+                        case TextStyleType::Instant: {
+                            child->m_isInstant = true;
+                            child->m_instantValue = tag->m_instantTime;
+                        } break;
+                        case TextStyleType::Shake: {
+                            child->m_thisTagNumber = i;
+                            child->m_shakeVal1 = (float)tag->m_shakeIntensity;
+                            child->m_shakeVal2 = tag->m_shakesPerSecond <= 0 ? 0.0f : 1.0f / tag->m_shakesPerSecond;
+                        } break;
+                        default:
+                            break;
+                        }
+                    }
+                }
+            }
 
-//     //         m_tagsArray->release();
-//     //         m_tagsArray = nullptr;
-//     //     }
+            m_specialDescriptors->release();
+            m_specialDescriptors = nullptr;
+        }
 
-//     //     return true;
-//     // }
+        return true;
+    }
 
-//     gd::string stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
-//         auto width = m_fields->m_maxWidth;
+    gd::string stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
+        auto width = m_fields->m_maxWidth;
 
-//         std::string str = p0;
-//         if (auto pos = str.find('\n'); pos != std::string::npos) {
-//             str = str.substr(0, pos);
-//         }
+        std::string str = p0;
+        if (auto pos = str.find('\n'); pos != std::string::npos) {
+            str = str.substr(0, pos);
+        }
 
-//         auto lbl = CCLabelBMFont::create("", m_fields->m_fontName.c_str());
-//         lbl->setScale(m_fields->m_textScale);
+        auto lbl = CCLabelBMFont::create("", m_fields->m_fontName.c_str());
+        lbl->setScale(m_fields->m_textScale);
 
-//         bool overflown = false;
-//         std::string current;
-//         for (auto it = str.begin(); it < str.end();) {
-//             auto cp = utf8::next(it, str.end());
-//             utf8::append(cp, current);
+        bool overflown = false;
+        std::string current;
+        for (auto it = str.begin(); it < str.end();) {
+            auto cp = utf8::next(it, str.end());
+            utf8::append(cp, current);
 
-//             // auto x = cocos2d::FNTConfigLoadFile("chatFont.fnt");
-//             // auto y = x->m_pFontDefDictionary;
+            // auto x = cocos2d::FNTConfigLoadFile("chatFont.fnt");
+            // auto y = x->m_pFontDefDictionary;
 
-//             lbl->setString(current.c_str());
-//             if (lbl->getScaledContentSize().width > width) {
-//                 overflown = true;
-//                 break;
-//             }
-//         }
+            lbl->setString(current.c_str());
+            if (lbl->getScaledContentSize().width > width) {
+                overflown = true;
+                break;
+            }
+        }
 
-//         if (overflown) {
-//             if (auto pos = current.rfind(' '); pos != std::string::npos) {
-//                 current.erase(current.begin() + pos, current.end());
-//             }
-//         } else {
-//             current += " ";
-//         }
+        if (overflown) {
+            if (auto pos = current.rfind(' '); pos != std::string::npos) {
+                current.erase(current.begin() + pos, current.end());
+            }
+        } else {
+            current += " ";
+        }
 
-//         return current;
-//     }
-// };
+        return current;
+    }
+};
 
 class $modify(CCTextureCache) {
     cocos2d::CCTexture2D* addImage(const char* name, bool idk) {
