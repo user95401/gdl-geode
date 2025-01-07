@@ -214,13 +214,13 @@ void gd_string_assign_hk(void* self, char* src, size_t len) {
 $execute {
 #ifdef GEODE_IS_WINDOWS
     // constexpr auto GD_STR_ASSIGN_ADDR = 0x3BE50; // OLD (2.206?)
-    // constexpr auto GD_STR_ASSIGN_ADDR = 0x3cca0;
-    // gd_string_assign_o = reinterpret_cast<void (__thiscall*)(void* self, char* src, size_t len)>(base::get() + GD_STR_ASSIGN_ADDR);
-    // auto res2 = Mod::get()->hook((void*)(base::get() + GD_STR_ASSIGN_ADDR), gd_string_assign_hk, "gd::string::assign", tulip::hook::TulipConvention::Thiscall).err();
-    // if (res2 != std::nullopt) {
-    //     log::error("Failed to hook gd::string::assign because of: {}", res2);
-    // }
-    
+    constexpr auto GD_STR_ASSIGN_ADDR = 0x3cca0;
+    gd_string_assign_o = reinterpret_cast<void(__thiscall*)(void* self, char* src, size_t len)>(base::get() + GD_STR_ASSIGN_ADDR);
+    auto res2 = Mod::get()->hook((void*)(base::get() + GD_STR_ASSIGN_ADDR), gd_string_assign_hk, "gd::string::assign", tulip::hook::TulipConvention::Thiscall).err();
+    if (res2 != std::nullopt) {
+        log::error("Failed to hook gd::string::assign because of: {}", res2);
+    }
+
     // constexpr auto GD_STR_APPEND_ADDR = 0x21DE0;
     // gd_string_append_o = reinterpret_cast<void (__thiscall*)(void*, char*, size_t)>(base::get() + GD_STR_APPEND_ADDR);
     // auto res3 = Mod::get()->hook((void*)(base::get() + GD_STR_APPEND_ADDR), gd_string_append_hk, "gd::string::append", tulip::hook::TulipConvention::Thiscall).err();

@@ -12,19 +12,21 @@ namespace gdl {
 #if defined(GEODE_IS_WINDOWS64)
     bool patchCString(uintptr_t srcAddr, const char* str) {
         uint8_t* arr = (uint8_t*)srcAddr;
-        if(arr[1] != 0x8D) {
+        if (arr[1] != 0x8D) {
             log::error("0x{:X}: instruction isn't lea!", srcAddr);
             return false;
         }
 
         uint8_t reg = arr[2] >> 3;
 
+        // clang-format off
         std::array<uint8_t, 11> patch = {
             static_cast<uint8_t>(0x48 | (reg > 0x07)),      // prefix 64 bit operation
             static_cast<uint8_t>(0xB8 | (reg & 0xF7)),      // mov <reg>,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // <64-bit value>
             0xC3                                            // ret
         };
+        // clang-format on
 
         *(uintptr_t*)(patch.data() + 2) = (uintptr_t)str;
 
@@ -35,7 +37,7 @@ namespace gdl {
         std::copy(patch.begin(), patch.end(), tramp);
 
         std::array<uint8_t, 7> callBytes = {0xE8, 0x00, 0x00, 0x00, 0x00, 0x90, 0x90}; // call <tramp> and 2 NOPs
-        auto relAddr = (uintptr_t)tramp - ((uintptr_t)srcAddr + 5);       // call is 5 bytes long
+        auto relAddr = (uintptr_t)tramp - ((uintptr_t)srcAddr + 5);                    // call is 5 bytes long
         *(int32_t*)(callBytes.data() + 1) = (int32_t)relAddr;
 
         if (Mod::get()->patch((void*)srcAddr, ByteVector(callBytes.begin(), callBytes.end())).isErr()) {
@@ -46,7 +48,7 @@ namespace gdl {
         return true;
     }
 
-    bool patchStdString(uintptr_t srcAddr, std::string const& str) {
+    bool patchStdString(uintptr_t srcAddr, const std::string& str) {
         // clang-format off
         // 1. patch the alloc_data function
         //   1. patch `lea rcx/ecx, [...]` OR `mov ecx/rcx ...` to the correct string size (with \0).
@@ -76,21 +78,21 @@ namespace gdl {
         uint8_t reg = 0;
         
 
-        // check for 64-bit operation
-        if(*arr == 0x48 || *arr == 0x49) {
+        // check for 64-bit or 16-bit operation
+        if (*arr == 0x48 || *arr == 0x49 || *arr == 0x66) {
             arr++;
             availableSize++;
         }
 
-        if(*arr == 0x8D) {                          // lea 
+        if (*arr == 0x8D) { // lea
             auto modrm = gdlutils::decodeModRM(*arr);
             availableSize += modrm.size;
             reg = modrm.reg;
-        } else if(*arr == 0x89 || *arr == 0x8B) {   // mov <reg>, <reg> || mov <reg>, [mem]
+        } else if (*arr == 0x89 || *arr == 0x8B) { // mov <reg>, <reg> || mov <reg>, [mem]
             auto modrm = gdlutils::decodeModRM(*arr);
             availableSize += modrm.size;
             reg = modrm.reg;
-        } else if(*arr >= 0xB8 && *arr <= 0xBF) {   // mov <reg>, <imm>
+        } else if (*arr >= 0xB8 && *arr <= 0xBF) { // mov <reg>, <imm>
             availableSize += 5;
             reg = (*arr - 0xB8) & 0xF7;
         } else {
@@ -98,33 +100,31 @@ namespace gdl {
             return false;
         }
 
-        bool strTooLong = 
-            (availableSize <= 3 && str.size() > 0x7F) ||
-            (availableSize == 4 && str.size() > 0x7FFF);
+        bool strTooLong = (availableSize <= 3 && str.size() > 0x7F) || (availableSize == 4 && str.size() > 0x7FFF);
 
-        if(strTooLong) {
+        if (strTooLong) {
             log::error("0x{:X}: String too long!", srcAddr, str.size());
             return false;
         }
 
         std::vector<uint8_t> patch(availableSize, 0x90);
 
-        if(availableSize <= 3) {
+        if (availableSize <= 3) {
             patch[0] = 0xB0 | (reg & 0xF7);
             patch[1] = static_cast<int8_t>(str.size());
         }
 
-        if(availableSize == 4) {
+        if (availableSize == 4) {
             int16_t size = static_cast<int16_t>(str.size());
             patch[0] = 0x66;
             patch[1] = 0xB0 | (reg & 0xF7);
-            std::copy(&patch[3], (uint8_t*)(&size),  (uint8_t*)(&size) + sizeof(size));
+            std::copy(&patch[3], (uint8_t*)(&size), (uint8_t*)(&size) + sizeof(size));
         }
 
-        if(availableSize >= 5) {
+        if (availableSize >= 5) {
             int32_t size = static_cast<int32_t>(str.size());
             patch[0] = 0xB8 | (reg & 0xF7);
-            std::copy(&patch[1], (uint8_t*)(&size),  (uint8_t*)(&size) + sizeof(size));
+            std::copy(&patch[1], (uint8_t*)(&size), (uint8_t*)(&size) + sizeof(size));
         }
 
         if (Mod::get()->patch((void*)srcAddr, ByteVector(patch.begin(), patch.end())).isErr()) {

@@ -65,5 +65,5 @@ ModRM gdlutils::decodeModRM(uint8_t modrm){
     
     ret.reg = (modrm >> 2) & 0b00000111;
 
-    return ret
+    return ret;
 }
