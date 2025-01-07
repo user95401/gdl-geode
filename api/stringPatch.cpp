@@ -1,9 +1,12 @@
 #include "stringPatch.hpp"
 
+#ifdef GEODE_IS_WINDOWS64
 #include <Zydis/Zydis.h>
+#include <PageManager.hpp>
+#endif
+
 #include <string.h>
 #include <chrono>
-#include <PageManager.hpp>
 #include <utils.hpp>
 
 using namespace geode::prelude;
@@ -74,9 +77,9 @@ namespace gdl {
         // =========================================
 
         uint8_t* arr = (uint8_t*)srcAddr;
-        uint8_t* start = arr;
         uint8_t availableSize = 0;
         uint8_t reg = 0;
+        
 
         // check for 64-bit or 16-bit operation
         if (*arr == 0x48 || *arr == 0x49 || *arr == 0x66) {
@@ -86,7 +89,7 @@ namespace gdl {
 
         if (*arr == 0x8D) { // lea
             auto modrm = gdlutils::decodeModRM(*arr);
-            availableSize += modrm.size + 1;
+            availableSize += modrm.size;
             reg = modrm.reg;
         } else if (*arr == 0x89 || *arr == 0x8B) { // mov <reg>, <reg> || mov <reg>, [mem]
             auto modrm = gdlutils::decodeModRM(*arr);
