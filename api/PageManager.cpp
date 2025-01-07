@@ -2,6 +2,8 @@
 
 using namespace geode::prelude;
 
+#ifdef GEODE_IS_WINDOWS64
+
 void PageManager::freeAll() {
     for (auto& page : m_pages) {
         page.free();
@@ -74,3 +76,5 @@ PageManager::Page& PageManager::allocNewPage() {
     
     return m_pages.back();
 }
+
+#endif

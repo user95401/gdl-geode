@@ -1,7 +1,7 @@
 #pragma once
 #include <Geode/Geode.hpp>
 
-#if defined(GEODE_IS_WINDOWS64)
+#ifdef GEODE_IS_WINDOWS64
 
 class PageManager {
     struct Page {

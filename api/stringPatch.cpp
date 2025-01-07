@@ -1,9 +1,12 @@
 #include "stringPatch.hpp"
 
+#ifdef GEODE_IS_WINDOWS64
 #include <Zydis/Zydis.h>
+#include <PageManager.hpp>
+#endif
+
 #include <string.h>
 #include <chrono>
-#include <PageManager.hpp>
 #include <utils.hpp>
 
 using namespace geode::prelude;

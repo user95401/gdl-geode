@@ -20,8 +20,10 @@ void patches::fixCyrillicP() {
     #error "Unsupported platform"
 #endif
 
+#ifdef GEODE_IS_WINDOWS
     if (res.isErr())
         log::warn("Failed to patch the Рррр fix ({}), be aware that CommentCell with cyrillic comments may crash!", res.err());
+#endif
 }
 
 void patches::patchStrings() {
