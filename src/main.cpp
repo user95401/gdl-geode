@@ -6,7 +6,7 @@
 
 using namespace geode::prelude;
 
-#ifdef GEODE_IS_ANDROID
+#if defined(GEODE_IS_ANDROID) || defined(__APPLE__)
 #define __isascii isascii
 #endif
 
@@ -85,6 +85,8 @@ class $modify(CCLabelBMFont) {
     }
 };
 
+#if defined(__APPLE__)
+#else
 #include "Geode/modify/MultilineBitmapFont.hpp"
 class $modify(MultilineBitmapFont) {
     struct Fields {
@@ -204,6 +206,7 @@ class $modify(MultilineBitmapFont) {
         return current;
     }
 };
+#endif
 
 #include <Geode/modify/OptionsLayer.hpp>
 #include "LanguageLayer.hpp"
