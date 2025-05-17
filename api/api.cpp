@@ -1,11 +1,11 @@
 #include <Geode/Geode.hpp>
 #include "api.hpp"
-#include "utils.hpp"
 
 using namespace geode::prelude;
 
 namespace gdl {
     static std::unordered_map<std::string, std::unordered_map<Language, std::string>> apiStrings;
+    static std::unordered_map<std::string, matjson::Value> apiStrLocations;
 
     Language getCurrentLanguage() {
         return (Language)Mod::get()->getSavedValue<int>("language-id", Language::GDL_RUSSIAN);
@@ -26,16 +26,29 @@ namespace gdl {
         }
     }
 
-    void addTranslation(const char* id, Language language, const char* translatedStr) {
-        apiStrings[id][language] = translatedStr;
+    const char* getTranslation(const char* id, Language language) {
+        if (apiStrings.contains(id) && apiStrings[id].contains(language)) {
+            return apiStrings[id][language].c_str();
+        }
+        else {
+            return id;
+        }
     }
 
-    const char* getTranslation(const char* id, Language language) {
-        if(apiStrings.contains(id) && apiStrings[id].contains(language)) {
-            return apiStrings[id][language].c_str();
-        } else {
-            return id; 
-        }
+    std::unordered_map<std::string, std::unordered_map<Language, std::string>>
+        getApiStrings() {
+        return apiStrings;
+    }
+    std::unordered_map<std::string, matjson::Value> getLocations() {
+        return apiStrLocations;
+    }
+    
+    bool hasTranslation(const char* id, Language lang) {
+        return (apiStrings.contains(id) && apiStrings[id].contains(lang));
+    }
+
+    void addTranslation(const char* id, Language language, const char* translatedStr) {
+        apiStrings[id][language] = translatedStr;
     }
 
     void addTranslations(const char* id, std::initializer_list<std::pair<Language, const char*>> translations) {
@@ -44,11 +57,26 @@ namespace gdl {
         }
     }
 
-    void addTranslationsFromFile(Language language, std::filesystem::path pathToJson) {
-        auto json = gdlutils::loadJson(pathToJson.string());
+    void addTranslationsFromFile(Language language, std::filesystem::path path) {
+        auto json = file::readJson(path);
+        if (json.err()) return log::error(
+            "err reading {}, {}", path, json.err().value_or("unhandled")
+        );
+        for(auto& translation : json.unwrapOrDefault()) {
+            addTranslation(
+                translation.getKey().value_or("unk").c_str(), 
+                language, 
+                translation.asString().unwrapOrDefault().c_str()
+            );
+        }
 
-        for(auto& translation : json.get<json::object_t>()) {
-            addTranslation(translation.first.c_str(), language, translation.second.get<json::string_t>().c_str());
+        auto locfile = string::replace(path.string(), "-lang.json", "-locations.json");
+        auto locations = file::readJson(locfile);
+        if (locations.err()) return log::error(
+            "err reading {}, {}", locfile, json.err().value_or("unhandled")
+        );
+        for(auto& location : json.unwrapOrDefault()) {
+            apiStrLocations[location.getKey().value_or("")] = location;
         }
     }
 };

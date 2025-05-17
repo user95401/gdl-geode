@@ -1,6 +1,8 @@
 # GDL
 ![GDL logo](gdlteam.gdl/gdlLogo.png)
 
+*user95401 was here)*
+
 Geometry Dash Localization is a modification that translates Geometry Dash into other languages.
 
 __If you want to translate GD into your language, please message us in our [Discord server](https://discord.gg/CScsGU3N6M) or @jaan2897 in Discord.__
