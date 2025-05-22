@@ -1,4 +1,5 @@
 #include <Geode/Geode.hpp>
+#include <alphalaneous.alphas_geode_utils/include/Utils.h>
 #include "api.hpp"
 
 #include <regex>
@@ -11,22 +12,32 @@ using namespace geode::prelude;
 #endif
 
 $execute{
+    GEODE_WINDOWS(SetConsoleOutputCP(65001)); // utf8
+
     //не ну а хули нет
     CCFileUtils::get()->addPriorityPath(getMod()->getResourcesDir().string().c_str());
 
-    auto languageCodename = gdl::getLanguageCodename(gdl::getCurrentLanguage());
-    auto langsetfile = fmt::format("{}-lang.json", languageCodename);
-    gdl::addTranslationsFromFile(
-        gdl::getCurrentLanguage(),
-        CCFileUtils::get()->fullPathForFilename(langsetfile.c_str(), 0).c_str()
-    );
+    auto code = gdl::getLanguageCodename(gdl::getCurrentLanguage());
+    auto lang_set = fmt::format("/{}-lang.json", code);
+
+    auto sps = CCFileUtils::get()->getSearchPaths();
+    for (auto sp : sps) {
+        auto file = (sp.c_str() + lang_set);
+        if (!CCFileUtils::get()->isFileExist(file.c_str())) continue;
+        gdl::addTranslationsFromFile(gdl::getCurrentLanguage(), file.c_str());
+    }
+
 };
 #include "Geode/modify/LoadingLayer.hpp"
 class $modify(LoadingLayer) {
+    $override bool init(bool a) {
+        geodeExecFunction14<LoadingLayer>();
+        return LoadingLayer::init(a);
+    }
     $override void loadAssets() {
         LoadingLayer::loadAssets();
-        if (this->m_loadStep == 1) geodeExecFunction13<LoadingLayer>();
         if (this->m_loadStep == 11) {
+            geodeExecFunction14<LoadingLayer>();
             if (gdl::getCurrentLanguage() != gdl::GDL_ENGLISH) {
                 auto plist = fmt::format("GDL_TranslatedFrames-{}.plist", gdl::getLanguageCodename(gdl::getCurrentLanguage()));
                 auto png = fmt::format("GDL_TranslatedFrames-{}.png", gdl::getLanguageCodename(gdl::getCurrentLanguage()));
@@ -37,24 +48,48 @@ class $modify(LoadingLayer) {
     }
 };
 
-#include "Geode/modify/CCLabelBMFont.hpp"
-class $modify(CCLabelBMFont) {
-    bool shouldUpdateWithTranslation() {
-        //про верочек
-        if (!this) return false;
-        if (!gdl::hasTranslation(this->getString())) return false;
-        if (typeinfo_cast<CCTextInputNode*>(this->getParent())) return false;
-        std::vector<std::string> wIDS = {
-            "creator-name"
-            ,"level-name"
-            ,"username-button"
-            ,"song-name-label"
-            ,"artist-label"
-        };
-        if (string::containsAny(this->getID(), wIDS)) return false;
-        if (this->getParent() and string::containsAny(this->getParent()->getID(), wIDS)) return false;
-        return true;
+enum TreeMapType {
+    IDxNames, //type##id
+    TypeNames, //type
+    IDs //id or type
+};
+auto getNodeParentsTree(CCNode* node, TreeMapType mapType = TreeMapType::IDs) {
+    auto map = std::map<const char*, unsigned int>();
+    if (node) while (node->m_pParent) {
+        auto name = AlphaUtils::Cocos::getClassName(node);
+        auto id = AlphaUtils::Cocos::getClassName(node);
+        switch (mapType) {
+        case IDxNames: map[(name + "##" + id).c_str()] = map.size() + 1;
+            break;
+        case TypeNames: map[(name).c_str()] = map.size() + 1;
+            break;
+        case IDs: map[(id.empty() ? name : id).c_str()] = map.size() + 1;
+            break;
+        }
+        node = node->m_pParent;
     }
+    log::debug("{} -> {}", __FUNCTION__, map);
+    return map;
+}
+bool shouldUpdateWithTranslation(CCNode* node, const char* str) {
+    //про верочек
+    if (!node) return false;
+    if (!gdl::hasTranslation(str)) return false;
+    if (getNodeParentsTree(node, TreeMapType::TypeNames).contains("CCTextInputNode")) return false;
+    std::vector<std::string> wIDS = {
+        "creator-name"
+        ,"level-name"
+        ,"username-button"
+        ,"song-name-label"
+        ,"artist-label"
+    };
+    if (string::containsAny(node->getID(), wIDS)) return false;
+    if (node->getParent() and string::containsAny(node->getParent()->getID(), wIDS)) return false;
+    return true;
+}
+
+#include "Geode/modify/CCLabelBMFont.hpp"
+class $modify(CCLabelBMFontTranslation, CCLabelBMFont) {
     void updateLocation() {
         if (gdl::getLocations().contains(this->getString())) {
             auto loc = gdl::getLocations()[this->getString()];
@@ -63,25 +98,45 @@ class $modify(CCLabelBMFont) {
             if (loc.contains("y")) setPositionY(loc["y"].asDouble().unwrapOrDefault());
         };
     }
-    bool initWithString(char const* str, char const* font, float a3, cocos2d::CCTextAlignment a4, cocos2d::CCPoint a5) {
-        if (!CCLabelBMFont::initWithString(str, font, a3, a4, a5)) return false;
-        queueInMainThread([this] {
-            if (!shouldUpdateWithTranslation()) return;
+    bool tryUpdateWithTranslation(char const* str) {
+        if (!shouldUpdateWithTranslation(this, str)) return false;
+        auto translation = gdl::getTranslation(str);
+        if (auto point = typeinfo_cast<CCNode*>(this->getUserObject("translation-point"_spr))) {
+            if (translation != point->getID()) {
+                this->setContentSize(point->getContentSize());
+                this->setScale(point->getScale());
+                this->setUserObject("translation-point"_spr, nullptr);
+                CC_SAFE_RELEASE_NULL(point);
+                return tryUpdateWithTranslation(str);
+            }
+        }
+        else {
+
+            this->setString(str);
             auto size = this->getScaledContentSize();
-            CCLabelBMFont::setString(gdl::getTranslation(this->getString()));
+            auto scale = this->getScale();
+
+            this->setString(translation);
             limitNodeSize(this, size, this->getScale(), 0.1f);
-            updateLocation();
-            });
-        return true;
-    }
-    virtual void setString(const char* newString) {
-        CCLabelBMFont::setString(newString);
-        if (shouldUpdateWithTranslation()) {
-            auto size = this->getScaledContentSize();
-            CCLabelBMFont::setString(gdl::getTranslation(newString));
-            limitNodeSize(this, size, this->getScale(), 0.1f);
+
+            point = CCNode::create();
+            point->setID(translation);
+            point->setScale(scale);
+            point->setContentSize(size);
+            this->setUserObject("translation-point"_spr, point);//save "changed flag"
+
             updateLocation();
         };
+        return true;
+    }
+    bool initWithString(char const* str, char const* font, float a3, cocos2d::CCTextAlignment a4, cocos2d::CCPoint a5) {
+        if (!CCLabelBMFont::initWithString(str, font, a3, a4, a5)) return false;
+        queueInMainThread([this] { if (this) tryUpdateWithTranslation(this->getString()); });
+        return true;
+    }
+    void setString(const char* newString) {
+        //какого хуя оно постоянно вызывается пока нод живёт
+        if (!tryUpdateWithTranslation(newString)) return CCLabelBMFont::setString(newString);
     }
 };
 
@@ -106,7 +161,7 @@ class $modify(MultilineBitmapFont) {
         return MultilineBitmapFont::readColorInfo(str2);
     }
     $override bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool colorsDisabled) {
-        p1 = gdl::getTranslation(p1.c_str());
+        if (shouldUpdateWithTranslation(this, p1.c_str())) p1 = gdl::getTranslation(p1.c_str());
 
         // log::debug("string!!! {} {} {}", p1.size(), p1.capacity(), p1.c_str());
         m_fields->m_textScale = p2;

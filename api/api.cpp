@@ -1,4 +1,5 @@
 #include <Geode/Geode.hpp>
+#include <regex>
 #include "api.hpp"
 
 using namespace geode::prelude;

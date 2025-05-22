@@ -8,14 +8,20 @@
 		"ios": "2.2074"
 	},
 	"id": "gdlteam.gdl",
-	"version": "v2.0.0",
+	"version": "v2.0.1",
 	"name": "GDL",
 	"developers": [ "GDL Team", "user95401" ],
 	"description": "Mod that translates GD into Russian language",
 	"links": {
-		"community": "https://discord.gg/CScsGU3N6M",
+		"community": "https://discord.gg/CpBA4ehJmX",
 		"homepage": "https://www.gdlocalisation.uk/",
 		"source": "https://github.com/user95401/gdl-geode"
+	},
+	"dependencies": {
+		"alphalaneous.alphas_geode_utils": {
+			"version": ">=v1.1.5",
+			"importance": "suggested"
+		}
 	},
 	"api": {
 		"include": [

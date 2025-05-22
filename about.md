@@ -1,11 +1,14 @@
-# GDL
-![GDL logo](gdlteam.gdl/gdlLogo.png)
+# user95401/gdl-geode
 
-*user95401 was here)*
+experimental fork of geometry dash localization mod to run it on 2.2074
+i removed a lot of stuff, f.e the string patches system that requires huge reverse engineering work to port again and again
+instead of was written awful (but working basicly) params update hooks.
+
+# GDL
 
 Geometry Dash Localization is a modification that translates Geometry Dash into other languages.
 
-__If you want to translate GD into your language, please message us in our [Discord server](https://discord.gg/CScsGU3N6M) or @jaan2897 in Discord.__
+__If you want to translate GD into your language, please message us in our [Discord server](https://discord.gg/CpBA4ehJmX) or @jaan2897 in Discord.__
 
 ## Authors
 - [__@jaan2897__](https://github.com/JaanDev) - project founder, programmer, website creator, texture and font redrawer.
@@ -19,6 +22,6 @@ __If you want to translate GD into your language, please message us in our [Disc
 - [__@raelc__](https://github.com/NotRaelc) - game translator.
 
 ## Links
-- [Our website](https://www.gdlocalisation.uk)
-- [Discord server](https://discord.gg/CScsGU3N6M) ([Backup link](https://discord.gg/Vh6G9G9Tk2))
-- [Our Github](https://github.com/gdlocalisation)
+- [Their website](https://www.gdlocalisation.uk)
+- [Discord server](https://discord.gg/CpBA4ehJmX)
+- [Their Github](https://github.com/gdlocalisation)
