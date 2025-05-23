@@ -12,6 +12,10 @@ i removed a lot of stuff, f.e the string patches system that requires huge rever
 instead of was written awful (but working basicly) params update hooks.
 </details>
 
+user95401's... [discord](https://discord.gg/6SxAbk3bTA), 
+[telegram](https://t.me/user95401_channel), 
+[github](https://github.com/user95401)
+
 ![image](https://github.com/user-attachments/assets/99ec48e8-08ef-44c2-9454-e9265bb17fe4)
 
 # ИНСТРУКЦИЯ ПО УСТАНОВКЕ:
@@ -46,6 +50,6 @@ __If you want to translate GD into your language, please message us in our [Disc
 - [__@raelc__](https://github.com/NotRaelc) - game translator.
 
 ## Links
-- [Their website](https://www.gdlocalisation.uk)
+- [Their website](https://gdlocalisation.netlify.app)
 - [Discord server](https://discord.gg/CpBA4ehJmX)
 - [Their Github](https://github.com/gdlocalisation)

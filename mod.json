@@ -14,7 +14,7 @@
 	"description": "Mod that translates GD into Russian language",
 	"links": {
 		"community": "https://discord.gg/CpBA4ehJmX",
-		"homepage": "https://www.gdlocalisation.uk/",
+		"homepage": "https://gdlocalisation.netlify.app/",
 		"source": "https://github.com/user95401/gdl-geode"
 	},
 	"dependencies": {

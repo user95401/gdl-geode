@@ -133,7 +133,7 @@ class $modify(CCLabelBMFontTranslation, CCLabelBMFont) {
     }
     bool initWithString(char const* str, char const* font, float a3, cocos2d::CCTextAlignment a4, cocos2d::CCPoint a5) {
         if (!CCLabelBMFont::initWithString(str, font, a3, a4, a5)) return false;
-        queueInMainThread([this] { if (this) tryUpdateWithTranslation(this->getString()); });
+        queueInMainThread([__this = Ref(this)] { if (__this) __this->tryUpdateWithTranslation(__this->getString()); });
         return true;
     }
     void setString(const char* newString) {

@@ -1,4 +1,3 @@
-#include <_main.hpp>
 //geode
 #include <Geode/Geode.hpp>
 using namespace geode::prelude;
@@ -6,16 +5,16 @@ using namespace geode::prelude;
 #include <Geode/utils/web.hpp>
 
 inline auto repo = Mod::get()->getMetadata().getLinks().getSourceURL().value_or("");
-inline auto raw_repo_content = string::replace(repo, "github.com", "raw.githubusercontent.com") + "/master/";
+inline auto raw_repo_content = string::replace(repo, "github.com", "raw.githubusercontent.com") + "/main/";
 inline auto latest_release = repo + "/releases/latest/download/";
 
-inline void download(std::string url = "", fs::path path = "", std::function<void()> onDownloadingEnd = []() {}) {
+inline void download(std::string url = "", std::filesystem::path path = "", std::function<void()> onDownloadingEnd = []() {}) {
     auto layer = CCLayer::create();
     layer->setID("download"_spr);
     SceneManager::get()->keepAcrossScenes(layer);
 
     auto downloadingLabel = CCLabelBMFont::create(
-        fmt::format("Downloading {}...", fs::path(url).filename().string()).c_str(),
+        fmt::format("Downloading {}...", std::filesystem::path(url).filename().string()).c_str(),
         "goldFont.fnt"
     );
     layer->setID("downloadingLabel"_spr);
@@ -104,7 +103,7 @@ class $modify(MenuLayerUpdaterExt, MenuLayer) {
 
                     if (actualMetaData.getVersion() == Mod::get()->getVersion()) return;
 
-                    auto updatesSkipped = fs::read(UPDATES_SKIPPED);
+                    auto updatesSkipped = file::readString(UPDATES_SKIPPED).unwrapOrDefault();
                     if (string::contains(
                         updatesSkipped, "\"" + actualMetaData.getVersion().toVString() + "\""
                     )) return;
@@ -205,7 +204,7 @@ class $modify(MenuLayerUpdaterExt, MenuLayer) {
                 }
             }
         );
-        if (fs::exists(UPDATES_CHECK_DISABLED)) void();
+        if (std::filesystem::exists(UPDATES_CHECK_DISABLED)) void();
         else m_fields->m_getJsonListener.setFilter(
             web::WebRequest().get(raw_repo_content + "/mod.json")
         );
