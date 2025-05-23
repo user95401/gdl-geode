@@ -2,6 +2,8 @@
 #include <alphalaneous.alphas_geode_utils/include/Utils.h>
 #include "api.hpp"
 
+#include "_updater.hpp"
+
 #include <regex>
 #include <utf8.h>
 
@@ -31,13 +33,13 @@ $execute{
 #include "Geode/modify/LoadingLayer.hpp"
 class $modify(LoadingLayer) {
     $override bool init(bool a) {
-        geodeExecFunction14<LoadingLayer>();
+        geodeExecFunction16<LoadingLayer>();
         return LoadingLayer::init(a);
     }
     $override void loadAssets() {
         LoadingLayer::loadAssets();
         if (this->m_loadStep == 11) {
-            geodeExecFunction14<LoadingLayer>();
+            geodeExecFunction16<LoadingLayer>();
             if (gdl::getCurrentLanguage() != gdl::GDL_ENGLISH) {
                 auto plist = fmt::format("GDL_TranslatedFrames-{}.plist", gdl::getLanguageCodename(gdl::getCurrentLanguage()));
                 auto png = fmt::format("GDL_TranslatedFrames-{}.png", gdl::getLanguageCodename(gdl::getCurrentLanguage()));
