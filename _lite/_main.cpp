@@ -346,6 +346,8 @@ class $modify(GDL_CCLabelBMFont, CCLabelBMFont) {
     }
 };
 
+#if !defined(GEODE_IS_IOS)
+
 #include "Geode/modify/MultilineBitmapFont.hpp"
 class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
     struct Fields {
@@ -379,7 +381,6 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
         }
         return c1;
     }
-
     static void appendUTF8(uint32_t cp, std::string& str) {
         if (cp < 0x80) {
             str += static_cast<char>(cp);
@@ -398,7 +399,6 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
         }
     }
 
-#if !defined(GEODE_IS_IOS)
     gd::string readColorInfo(gd::string s) {
         std::string str = s;
         std::string str2;
@@ -410,8 +410,6 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
 
         return MultilineBitmapFont::readColorInfo(str2);
     }
-#endif
-
     bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool colorsDisabled) {
         if (!p0) return false;
 
@@ -492,8 +490,6 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
 
         return true;
     }
-
-#if !defined(GEODE_IS_IOS)
     gd::string stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
         auto width = m_fields->m_maxWidth;
 
@@ -536,8 +532,9 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
 
         return current;
     }
-#endif
 };
+
+#endif
 
 #include <Geode/modify/CCIMEDispatcher.hpp>
 class $modify(GDL_CCIMEDispatcher, CCIMEDispatcher) {
