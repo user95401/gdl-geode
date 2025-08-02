@@ -398,7 +398,8 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
         }
     }
 
-    gd::string GEODE_IOS(__nah_)readColorInfo(gd::string s) {
+#if !defined(GEODE_IS_IOS)
+    gd::string readColorInfo(gd::string s) {
         std::string str = s;
         std::string str2;
 
@@ -409,6 +410,7 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
 
         return MultilineBitmapFont::readColorInfo(str2);
     }
+#endif
 
     bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool colorsDisabled) {
         if (!p0) return false;
@@ -491,7 +493,8 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
         return true;
     }
 
-    gd::string GEODE_IOS(__nah_)stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
+#if !defined(GEODE_IS_IOS)
+    gd::string stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
         auto width = m_fields->m_maxWidth;
 
         std::string translatedText = p0;
@@ -533,6 +536,7 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
 
         return current;
     }
+#endif
 };
 
 #include <Geode/modify/CCIMEDispatcher.hpp>
