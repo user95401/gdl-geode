@@ -36,7 +36,7 @@ jobs:
         with:
           combine: true
           target: ${{ matrix.config.target }}
-          working-directory: ./_lite/
+          path: _lite
   upload:
     name: Combine and upload builds
     runs-on: ubuntu-latest
