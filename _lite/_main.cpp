@@ -398,7 +398,7 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
         }
     }
 
-    gd::string GEODE_IOS(__nah_) readColorInfo(gd::string s) {
+    gd::string GEODE_IOS(__nah_)readColorInfo(gd::string s) {
         std::string str = s;
         std::string str2;
 
@@ -491,7 +491,7 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
         return true;
     }
 
-    gd::string GEODE_IOS(__nah_) stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
+    gd::string GEODE_IOS(__nah_)stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
         auto width = m_fields->m_maxWidth;
 
         std::string translatedText = p0;
