@@ -61,3 +61,5 @@ mergemods.py
 /build-android32
 /build-android64
 .VSCodeCounter
+/.vs
+/_lite/.vs
