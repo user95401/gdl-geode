@@ -31,13 +31,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Change to lite directory
-        run: cd ./_lite/
       - name: Build the mod
         uses: geode-sdk/build-geode-mod@main
         with:
           combine: true
           target: ${{ matrix.config.target }}
+          working-directory: ./_lite/
   upload:
     name: Combine and upload builds
     runs-on: ubuntu-latest
