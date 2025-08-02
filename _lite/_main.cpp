@@ -1,4 +1,3 @@
-#pragma once
 #include <Geode/Geode.hpp>
 #include <Geode/ui/GeodeUI.hpp>
 #include <alphalaneous.alphas_geode_utils/include/Utils.h>
@@ -186,14 +185,14 @@ class $modify(GDL_LoadingLayer, LoadingLayer) {
 
             path = (sp.c_str() + plistFile);
             if (CCFileUtils::get()->isFileExist(path.c_str())) {
-                path = CCFileUtils::get()->fullPathForFilename(path.c_str(), 0);
+                path = CCFileUtils::get()->fullPathForFilename(path.c_str(), 0).c_str();
                 CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile(path.c_str());
                 CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile(path.c_str());
             }
 
             path = (sp.c_str() + langFile);
             if (CCFileUtils::get()->isFileExist(path.c_str())) {
-                path = CCFileUtils::get()->fullPathForFilename(path.c_str(), 0);
+                path = CCFileUtils::get()->fullPathForFilename(path.c_str(), 0).c_str();
                 auto read = file::readJson(path);
                 if (read.err()) {
                     auto err = read.err().value_or("unk err");
@@ -281,7 +280,7 @@ class $modify(GDL_CCLabelBMFont, CCLabelBMFont) {
 
         auto file = fmt::format("{}-locations.json", gdl::getLanguageCodename(gdl::getCurrentLanguage()));
         if (!CCFileUtils::get()->m_fullPathCache.contains(file)) locations = file::readJson(
-            CCFileUtils::get()->fullPathForFilename(file.c_str(), 0)
+            CCFileUtils::get()->fullPathForFilename(file.c_str(), 0).c_str()
         ).unwrap();
 
         if (locations.contains(this->getString())) {
@@ -399,7 +398,7 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
         }
     }
 
-    gd::string readColorInfo(gd::string s) {
+    gd::string GEODE_IOS(__nah_) readColorInfo(gd::string s) {
         std::string str = s;
         std::string str2;
 
@@ -412,8 +411,7 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
     }
 
     bool initWithFont(const char* p0, gd::string p1, float p2, float p3, cocos2d::CCPoint p4, int p5, bool colorsDisabled) {
-        if (!p0)
-            return false; // Проверка на nullptr
+        if (!p0) return false;
 
         m_fields->m_textScale = p2;
         m_fields->m_fontName = p0;
@@ -424,8 +422,7 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
             translatedText = gdl::getTranslation(p1.c_str());
         }
 
-        // Безопасное удаление тегов с помощью regex
-        std::string notags = translatedText; // Инициализируем оригинальным текстом
+        std::string notags = translatedText;
         std::regex tagRegex("(<c.>)|(<\\/c>)|(<d...>)|(<s...>)|(<\\/s>)|(<i...>)|(<\\/i>)");
         notags = std::regex_replace(translatedText, tagRegex, "");
 
@@ -444,8 +441,7 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
             if (m_specialDescriptors && m_characters) {
                 for (auto i = 0u; i < m_specialDescriptors->count(); i++) {
                     auto tag = static_cast<TextStyleSection*>(m_specialDescriptors->objectAtIndex(i));
-                    if (!tag)
-                        continue;
+                    if (!tag) continue;
 
                     if (tag->m_endIndex == -1 && tag->m_styleType == TextStyleType::Delayed) {
                         if (tag->m_startIndex >= 0 && tag->m_startIndex < static_cast<int>(m_characters->count())) {
@@ -454,15 +450,15 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
                                 child->m_fDelay = tag->m_delay;
                             }
                         }
-                    } else {
+                    } 
+                    else {
                         int startIndex = std::max(0, tag->m_startIndex);
                         int endIndex = std::min(tag->m_endIndex, static_cast<int>(m_characters->count() - 1));
 
                         for (int j = startIndex; j <= endIndex && j >= 0; j++) {
                             if (j < static_cast<int>(m_characters->count())) {
                                 auto child = static_cast<CCFontSprite*>(m_characters->objectAtIndex(j));
-                                if (!child)
-                                    continue;
+                                if (!child) continue;
 
                                 switch (tag->m_styleType) {
                                 case TextStyleType::Colored: {
@@ -478,7 +474,7 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
                                     child->m_fShakeElapsed = tag->m_shakesPerSecond <= 0 ? 0.0f : 1.0f / tag->m_shakesPerSecond;
                                 } break;
                                 default:
-                                    break;
+                                  break;
                                 }
                             }
                         }
@@ -495,7 +491,7 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
         return true;
     }
 
-    gd::string stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
+    gd::string GEODE_IOS(__nah_) stringWithMaxWidth(gd::string p0, float scale, float scaledW) {
         auto width = m_fields->m_maxWidth;
 
         std::string translatedText = p0;
@@ -509,8 +505,7 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
         }
 
         auto lbl = CCLabelBMFont::create("", m_fields->m_fontName.c_str());
-        if (!lbl)
-            return p0; // Возвращаем оригинал при ошибке создания
+        if (!lbl) return p0;
 
         lbl->setScale(m_fields->m_textScale);
 
@@ -531,7 +526,8 @@ class $modify(GDL_MultilineBitmapFont, MultilineBitmapFont) {
             if (auto pos = current.rfind(' '); pos != std::string::npos) {
                 current.erase(current.begin() + pos, current.end());
             }
-        } else {
+        } 
+        else {
             current += " ";
         }
 
