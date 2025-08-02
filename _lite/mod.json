@@ -1,0 +1,43 @@
+{
+	"geode": "4.7.0",
+	"early-load": true,
+	"gd": {
+		"win": "2.2074",
+		"android": "2.2074",
+		"mac": "2.2074",
+		"ios": "2.2074"
+	},
+	"id": "user95401.gdl-lite",
+	"version": "v2.0.0-alpha.1",
+	"name": "GDL Lite",
+	"developers": [ "GDL Team", "user95401" ],
+	"description": "Mod that translates GD into Russian language",
+	"links": {
+		"community": "https://discord.gg/CpBA4ehJmX",
+		"homepage": "https://gdlocalisation.netlify.app",
+		"source": "https://github.com/user95401/gdl-geode"
+	},
+	"dependencies": {
+		"alphalaneous.alphas_geode_utils": {
+			"version": ">=v1.1.5",
+			"importance": "suggested"
+		},
+		"geode.node-ids": {
+			"version": ">=v1.21.1",
+			"importance": "suggested"
+		}
+	},
+	"api": {
+		"include": [
+			"../api/*.hpp"
+		]
+	},
+	"resources": {
+		"files": [
+			"../resources/**/*.*"
+		],
+		"sprites": [
+			"../resources/spritesheets/*.png"
+		]
+	}
+}
